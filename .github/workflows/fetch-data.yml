@@ -5,15 +5,23 @@ on:
     - cron: '*/10 * * * *'  # 每 10 分钟运行一次
   workflow_dispatch:  # 允许手动触发
 
+permissions:
+  contents: write  # 需要写权限来提交 data.json
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
 
       - name: Fetch data from Gamma API
         run: |
-          ALL_EVENTS='[]'
+          ALL_EVENTS="[]"
           OFFSET=0
           LIMIT=100
 
@@ -43,14 +51,13 @@ jobs:
               break
             fi
 
-            sleep 2
+            sleep 1
           done
 
-          # 过滤出最高气温市场
+          # 过滤出最高气温市场并保存
           echo "$ALL_EVENTS" | jq '[.[] | select(.slug and (.slug | test("highest-temperature")))]' > data.json
           EVENT_COUNT=$(jq 'length' data.json)
           echo "Total temperature events: $EVENT_COUNT"
-          echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
 
       - name: Commit and push data
         run: |
