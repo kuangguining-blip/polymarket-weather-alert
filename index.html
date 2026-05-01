@@ -98,7 +98,7 @@ body::after{content:'';position:fixed;inset:0;
 @keyframes gradient{0%{background-position:0% 50%}100%{background-position:300% 50%}}
 
 /* === MAIN GRID === */
-.main-grid{display:grid;grid-template-columns:58% 1fr;gap:16px;animation:fadeUp .4s var(--ease)}
+.main-grid{display:grid;grid-template-columns:1fr 58%;gap:16px;animation:fadeUp .4s var(--ease)}
 .left-panel{display:flex;flex-direction:column;gap:0;height:100%}
 .left-panel .toolbar{margin-bottom:10px}
 .right-panel{display:flex;flex-direction:column;gap:12px;height:100%}
@@ -326,20 +326,7 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
   <!-- Main Content: 左右两栏 -->
   <div id="mainContent" style="display:none" class="main-grid">
 
-    <!-- 左栏：搜索 + 城市列表 -->
-    <div class="left-panel">
-      <div class="toolbar" id="toolbar">
-        <div class="search-wrap"><input class="search-box" id="searchBox" placeholder="搜索城市..." oninput="debounceFilter()"><span class="ico">🔍</span></div>
-        <div class="count" id="rowCount"></div>
-      </div>
-      <div id="tableSec">
-        <div class="table-wrap" id="tableWrap" style="max-height:75vh;overflow-y:auto">
-          <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 右栏：成交量排行 + 触发警报 -->
+    <!-- 左栏：成交量排行 + 触发警报 -->
     <div class="right-panel">
       <div class="vol-rank" id="volRank" style="display:none">
         <div class="vol-rank-header">
@@ -355,6 +342,19 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
           <div class="alert-badge high" id="alertCount">0</div>
         </div>
         <div class="alert-pair-list" id="alertList"></div>
+      </div>
+    </div>
+
+    <!-- 右栏：搜索 + 城市列表 -->
+    <div class="left-panel">
+      <div class="toolbar" id="toolbar">
+        <div class="search-wrap"><input class="search-box" id="searchBox" placeholder="搜索城市..." oninput="debounceFilter()"><span class="ico">🔍</span></div>
+        <div class="count" id="rowCount"></div>
+      </div>
+      <div id="tableSec">
+        <div class="table-wrap" id="tableWrap" style="max-height:75vh;overflow-y:auto">
+          <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+        </div>
       </div>
     </div>
   </div>
