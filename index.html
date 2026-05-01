@@ -131,7 +131,8 @@ body::after{content:'';position:fixed;inset:0;
 .alert-pair.warn:hover{box-shadow:0 2px 12px rgba(245,158,11,.06)}
 /* 警报内的各元素 */
 .alert-flag{font-size:18px;flex-shrink:0}
-.alert-city{font-size:12px;font-weight:700;color:var(--text);min-width:75px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alert-city{font-size:12px;font-weight:700;color:var(--text);min-width:55px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alert-temp{font-size:12px;font-weight:800;color:var(--text2);white-space:nowrap;flex-shrink:0;padding:2px 8px;background:var(--surface);border-radius:6px;border:1px solid var(--border)}
 .alert-date{font-size:10px;color:var(--text3);white-space:nowrap;margin-right:2px}
 .alert-settle{font-size:10px;font-weight:700;font-family:var(--mono);white-space:nowrap}
 .alert-tag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;flex-shrink:0}
@@ -617,12 +618,12 @@ function renderAlerts(alerts){
     h+='<div class="alert-pair '+cls+'" style="animation-delay:'+i*80+'ms">'
       +'<span class="alert-flag">'+a.fl+'</span>'
       +'<span class="alert-city" title="'+esc(a.en)+'">'+esc(label)+'</span>'
-      +'<span class="alert-date">'+a.dt+'</span>'
+      +'<span class="alert-temp" title="'+esc(a.title)+'">'+esc(a.title)+'</span>'
       +'<span class="dot-icon" style="font-size:10px;flex-shrink:0">'+dotIcon+'</span>'
       +'<span class="alert-tag '+(a.side==='YES'?'yes':'no')+'">'+a.side+'</span>'
       +'<span class="alert-pct" style="color:'+(cls==='high'?'var(--red)':'var(--orange)')+'">'+a.pct.toFixed(2)+'%</span>'
       +'<span class="alert-settle" style="color:'+remainColor+'" data-settle-ts="'+a.settleTs+'">'+remain+'</span>'
-      +'<a href="'+a.url+'" target="_blank" rel="noopener" class="alert-pair-link" title="'+esc(a.title)+'">↗ Trade</a>'
+      +'<a href="'+a.url+'" target="_blank" rel="noopener" class="alert-pair-link">↗</a>'
     +'</div>';
   }
   list.innerHTML=h;
