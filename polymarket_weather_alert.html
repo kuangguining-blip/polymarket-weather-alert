@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polymarket Weather Alert</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#e8f4fd;--surface:#ffffff;--surface2:#f0f6ff;--surface3:#e3eeff;
+  --border:#b6d4f2;--border2:#8ab4e0;
+  --text:#1a2b3a;--text2:#3a5a7a;--text3:#7a95b0;
+  --accent:#3b82f6;--accent2:#6366f1;--accent-glow:rgba(59,130,246,.10);
+  --red:#dc2626;--red-bg:rgba(220,38,38,.06);--red-border:rgba(220,38,38,.15);
+  --green:#16a34a;--green-bg:rgba(22,163,74,.06);--green-border:rgba(22,163,74,.15);
+  --orange:#d97706;--orange-bg:rgba(217,119,6,.06);--orange-border:rgba(217,119,6,.15);
+  --radius:14px;--radius2:10px;
+  --font:'Inter','Segoe UI','Microsoft YaHei',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono','Cascadia Code','Fira Code',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);--bounce:cubic-bezier(.34,1.56,.64,1);
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(59,130,246,.07) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 50% at 85% 80%,rgba(139,92,246,.05) 0%,transparent 60%);
+  pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;
+  background-image:radial-gradient(rgba(60,100,160,.06) 1px,transparent 1px);
+  background-size:24px 24px;pointer-events:none;z-index:0}
+.container{max-width:1520px;margin:0 auto;padding:16px 24px;position:relative;z-index:1}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+
+/* === HEADER === */
+.header{display:flex;align-items:center;justify-content:space-between;padding:10px 0 16px;margin-bottom:16px;flex-wrap:wrap;gap:12px;animation:fadeDown .5s var(--ease)}
+.header-left{display:flex;align-items:center;gap:12px}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 20px rgba(59,130,246,.3);animation:logoPulse 3s ease-in-out infinite}
+.logo h1{font-size:17px;font-weight:800;letter-spacing:-.4px;background:linear-gradient(135deg,var(--text),var(--text2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo h1 small{display:block;font-size:11px;font-weight:500;margin-top:1px;-webkit-text-fill-color:var(--text3)}
+.controls{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+
+/* === BUTTONS === */
+.btn{padding:6px 14px;border:none;border-radius:var(--radius2);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s var(--ease);display:inline-flex;align-items:center;gap:5px;font-family:var(--font);position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.08),transparent);opacity:0;transition:opacity .2s}
+.btn:hover::after{opacity:1}
+.btn:active{transform:scale(.95);transition-duration:.08s}
+.btn-scan{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 2px 16px rgba(59,130,246,.3);padding:6px 18px}
+.btn-scan:hover{box-shadow:0 6px 28px rgba(59,130,246,.45);transform:translateY(-1px)}
+.btn-scan:disabled{opacity:.3;cursor:not-allowed;transform:none!important;box-shadow:none}
+.btn-ghost{background:var(--surface);color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--border2);background:var(--surface2)}
+.btn-lang{background:var(--surface);color:var(--accent);border:1px solid var(--border);font-weight:800;font-size:11px;letter-spacing:.5px;min-width:36px;justify-content:center;padding:6px 10px}
+.btn-lang:hover{background:var(--accent-glow);border-color:var(--accent)}
+.btn-auto{font-size:11px}
+.btn-auto.on{background:var(--green-bg);color:var(--green);border-color:var(--green-border);animation:autoGlow 2s ease-in-out infinite}
+@keyframes autoGlow{0%,100%{box-shadow:0 0 0 rgba(34,197,94,0)}50%{box-shadow:0 0 12px rgba(34,197,94,.15)}}
+
+/* === INPUTS === */
+.input-group{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:0 10px;transition:all .2s var(--ease)}
+.input-group:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+.input-group label{font-size:11px;color:var(--text3);white-space:nowrap;font-weight:500}
+.input-group input[type="number"]{width:50px;padding:6px 2px;background:transparent;border:none;color:var(--orange);font-size:13px;font-weight:800;text-align:center;outline:none;font-family:var(--mono)}
+.input-group span{font-size:11px;color:var(--text3);font-weight:500}
+.input-group input[type="date"]{width:138px;padding:5px 4px;background:transparent;border:none;color:var(--text);font-size:12px;font-weight:600;outline:none;cursor:pointer;color-scheme:dark;font-family:var(--font)}
+.font-size-group .btn{font-size:14px;font-weight:800;padding:6px 8px;min-width:auto}
+
+/* === QUICK DATES === */
+.quick-dates{display:flex;gap:4px;margin-left:4px}
+.qdate{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:var(--surface);color:var(--text3);border:1px solid transparent;transition:all .15s var(--ease);font-family:var(--font)}
+.qdate:hover{color:var(--text);background:var(--surface2);transform:translateY(-1px)}
+.qdate.on{background:var(--accent-glow);color:var(--accent);border-color:rgba(59,130,246,.2);box-shadow:0 2px 8px rgba(59,130,246,.1)}
+
+/* === STATS === */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;animation:fadeUp .5s var(--ease) .1s both}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:all .25s var(--ease);position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(255,255,255,.01));pointer-events:none}
+.stat::after{content:'';position:absolute;top:-20px;right:-20px;width:60px;height:60px;border-radius:50%;opacity:.04}
+.stat:nth-child(1)::after{background:var(--accent)}.stat:nth-child(2)::after{background:var(--text)}.stat:nth-child(3)::after{background:var(--red)}.stat:nth-child(4)::after{background:var(--green)}
+.stat:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2);border-color:var(--border2)}
+.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:600}
+.stat-val{font-size:24px;font-weight:900;font-family:var(--mono);transition:all .4s var(--ease)}
+.stat-val.c1{color:var(--accent)}.stat-val.c2{color:var(--text)}.stat-val.c3{color:var(--red)}.stat-val.c4{color:var(--green)}
+.stat-val.pop{transform:scale(1.12)}
+
+/* === PROGRESS === */
+.progress{height:3px;background:var(--surface);border-radius:2px;margin-bottom:16px;overflow:hidden;opacity:0;transition:opacity .3s var(--ease)}
+.progress.on{opacity:1}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent),var(--green),var(--accent));background-size:300% 100%;animation:gradient 3s linear infinite;border-radius:2px;transition:width .4s var(--ease)}
+@keyframes gradient{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+
+/* === MAIN GRID === */
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;animation:fadeUp .4s var(--ease)}
+.left-panel{display:flex;flex-direction:column;gap:0}
+.left-panel .toolbar{margin-bottom:10px}
+
+/* === ALERTS === */
+.alert-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 16px;margin-bottom:0;position:relative;overflow:hidden;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column}
+.alert-section::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),var(--red),var(--orange),transparent);opacity:.6}
+.alert-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative;flex-shrink:0}
+.alert-header .alert-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;animation:alertIconPulse 2s ease-in-out infinite;flex-shrink:0}
+.alert-header .alert-icon.high{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.2);box-shadow:0 0 16px rgba(239,68,68,.15)}
+.alert-header .alert-icon.warn{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.2);box-shadow:0 0 16px rgba(245,158,11,.12)}
+.alert-header-text h2{font-size:14px;font-weight:800;color:var(--text);line-height:1.2}
+.alert-header-text small{font-size:11px;color:var(--text3);font-weight:500}
+.alert-badge{margin-left:auto;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800;font-family:var(--mono);flex-shrink:0;transition:all .3s var(--bounce)}
+.alert-badge.high{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);text-shadow:0 0 8px rgba(239,68,68,.3)}
+.alert-badge.warn{background:rgba(245,158,11,.1);color:var(--orange);border:1px solid rgba(245,158,11,.2)}
+
+/* 警报列表 - 右栏左右对称排列 */
+.alert-pair-list{display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto;min-height:0}
+.alert-pair{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:center;opacity:0;animation:alertSlide .4s var(--ease) forwards;padding:4px 0}
+.alert-pair .pair-city{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;transition:all .25s var(--ease);cursor:pointer;overflow:hidden;position:relative}
+.alert-pair .pair-city:hover{background:var(--surface3);border-color:var(--border2)}
+.alert-pair .pair-city .city-flag{font-size:20px;flex-shrink:0;width:28px;text-align:center}
+.alert-pair .pair-city .city-info{min-width:0;flex:1}
+.alert-pair .pair-city .city-name{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alert-pair .pair-city .city-date{font-size:10px;color:var(--text3);margin-top:1px;font-weight:500}
+.alert-pair .pair-city .city-link-ico{color:var(--text3);font-size:10px;flex-shrink:0;transition:color .15s;margin-left:4px}
+.alert-pair .pair-city:hover .city-link-ico{color:var(--accent)}
+
+/* 中间连接线 */
+.alert-pair .pair-arrow{display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
+.alert-pair .pair-arrow .arrow-line{height:1px;background:linear-gradient(90deg,var(--border),var(--border2),var(--border));width:40px}
+.alert-pair .pair-arrow .arrow-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;position:relative;transition:all .3s}
+.alert-pair .pair-arrow .arrow-dot.high{background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.2);color:var(--red)}
+.alert-pair .pair-arrow .arrow-dot.warn{background:rgba(245,158,11,.08);border:1.5px solid rgba(245,158,11,.2);color:var(--orange)}
+.alert-pair.high .pair-arrow .arrow-dot{animation:arrowPulse 2s ease-in-out infinite}
+
+/* 右侧警报详情 */
+.alert-pair .pair-alert{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;transition:all .25s var(--ease);position:relative;overflow:hidden;flex-wrap:wrap}
+.alert-pair .pair-alert::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:12px 0 0 12px}
+.alert-pair.high .pair-alert::before{background:linear-gradient(180deg,var(--red),rgba(239,68,68,.2))}
+.alert-pair.warn .pair-alert::before{background:linear-gradient(180deg,var(--orange),rgba(245,158,11,.2))}
+.alert-pair .pair-alert::after{content:'';position:absolute;left:-20px;top:-20px;width:60px;height:60px;border-radius:50%;pointer-events:none}
+.alert-pair.high .pair-alert::after{background:radial-gradient(circle,rgba(239,68,68,.04),transparent 70%)}
+.alert-pair.warn .pair-alert::after{background:radial-gradient(circle,rgba(245,158,11,.03),transparent 70%)}
+.alert-pair .pair-alert:hover{background:var(--surface3);border-color:var(--border2)}
+.alert-pair.high .pair-alert:hover{border-color:rgba(239,68,68,.2);box-shadow:0 4px 16px rgba(239,68,68,.06)}
+.alert-pair.warn .pair-alert:hover{border-color:rgba(245,158,11,.2);box-shadow:0 4px 16px rgba(245,158,11,.06)}
+.alert-detail-box{flex:1;min-width:0}
+.alert-detail-title{font-size:12px;font-weight:600;color:var(--text2);white-space:normal;word-break:break-word;line-height:1.4}
+.alert-detail-tags{display:flex;gap:5px;align-items:center;margin-top:4px;flex-wrap:wrap}
+.alert-detail-pct{font-size:16px;font-weight:900;font-family:var(--mono);flex-shrink:0;min-width:75px;text-align:left}
+.alert-pair.high .alert-detail-pct{color:var(--red)}
+.alert-pair.warn .alert-detail-pct{color:var(--orange)}
+.alert-detail-pct small{font-size:10px;color:var(--text3);font-weight:500;display:block;margin-top:1px}
+.alert-pair-link{padding:6px 12px;border-radius:8px;background:linear-gradient(135deg,var(--accent-glow),rgba(139,92,246,.06));color:var(--accent);text-decoration:none;font-size:11px;font-weight:700;border:1px solid rgba(59,130,246,.08);transition:all .25s var(--ease);white-space:nowrap;font-family:var(--font);flex-shrink:0;display:flex;align-items:center;gap:3px}
+.alert-pair-link:hover{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.25);transform:translateY(-1px);box-shadow:0 4px 16px rgba(59,130,246,.12)}
+
+.tag{padding:3px 10px;border-radius:7px;font-size:10px;font-weight:700;letter-spacing:.3px;transition:all .15s}
+.tag-yes{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.tag-no{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.tag-pct{background:var(--orange-bg);color:var(--orange);border:1px solid var(--orange-border);font-size:10px;font-weight:800}
+
+@keyframes alertIconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes arrowPulse{0%,100%{transform:scale(1);box-shadow:0 0 8px rgba(239,68,68,.08)}50%{transform:scale(1.15);box-shadow:0 0 16px rgba(239,68,68,.18)}}
+
+/* === TOOLBAR === */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.search-box{flex:1;min-width:180px;padding:8px 14px 8px 36px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);color:var(--text);font-size:12px;outline:none;transition:all .2s var(--ease);font-family:var(--font)}
+.search-box:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+.search-wrap{position:relative;flex:1;min-width:180px}
+.search-wrap .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;transition:color .2s}
+.search-box:focus~.ico,.search-box:focus+.ico{color:var(--accent)}
+.search-box::placeholder{color:var(--text3)}
+.count{font-size:11px;color:var(--text3);margin-left:auto;white-space:nowrap;font-family:var(--mono)}
+
+/* === TABLE === */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:fadeUp .4s var(--ease)}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;cursor:default;backdrop-filter:blur(8px)}
+tbody td{padding:7px 12px;font-size:11px;border-bottom:1px solid rgba(30,45,68,.3);font-family:var(--mono);font-size:11px;transition:background .15s}
+tbody tr{transition:background .12s var(--ease)}
+tbody tr:hover td{background:rgba(59,130,246,.03)}
+.city-row{cursor:pointer}
+.city-row:hover td{background:rgba(59,130,246,.05)!important}
+.city-row td{font-family:var(--font)!important;font-size:12px!important;font-weight:700;color:var(--accent);padding:9px 12px!important;background:var(--surface2);border-bottom:1px solid var(--border);transition:all .15s}
+.city-row.has-alert td{color:var(--red)!important;font-weight:800;background:rgba(239,68,68,.04)!important}
+.city-row.has-alert td:first-child{box-shadow:inset 3px 0 0 var(--red)}
+.city-row .chevron{transition:transform .2s var(--ease);display:inline-block;font-size:14px;color:var(--text2);cursor:pointer;padding:3px 5px;border-radius:4px}
+.city-row .chevron:hover{background:var(--surface3);color:var(--text)}
+.city-link{color:var(--accent);text-decoration:none;transition:all .15s var(--ease)}
+.city-link:hover{opacity:.7;text-decoration:underline}
+.city-row.collapsed .chevron{transform:rotate(-90deg)}
+.mkt-row{max-height:40px;opacity:1;transition:max-height .25s var(--ease),opacity .2s}
+.mkt-row td{padding:5px 12px 5px 20px;font-size:13px}
+.bar-wrap{display:inline-flex;align-items:center;gap:5px;justify-content:flex-start}
+.pct-val{font-weight:800;font-size:13px;min-width:48px;text-align:left}
+.bar{height:3px;border-radius:2px;display:inline-block;min-width:2px;max-width:50px;transition:width .4s var(--ease)}
+.bar-yes{background:var(--red)}.bar-no{background:var(--green)}
+.status-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.status-dot.alert{background:var(--red);box-shadow:0 0 8px rgba(239,68,68,.5);animation:pulse 1.5s ease-in-out infinite}
+.status-dot.ok{background:var(--green);opacity:.4}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px rgba(239,68,68,.5)}50%{opacity:.5;box-shadow:0 0 16px rgba(239,68,68,.7)}}
+.btn-trade{padding:3px 10px;border-radius:7px;background:linear-gradient(135deg,var(--accent-glow),rgba(99,102,241,.06));color:var(--accent);text-decoration:none;font-size:10px;font-weight:700;border:1px solid rgba(59,130,246,.08);transition:all .2s var(--ease);white-space:nowrap;font-family:var(--font)}
+.btn-trade:hover{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.2);transform:translateY(-1px)}
+.no-alert-tag{color:var(--text3);font-size:10px}
+
+/* === EMPTY STATE === */
+.empty{text-align:center;padding:80px 20px;color:var(--text3);animation:fadeUp .6s var(--ease)}
+.empty-icon{font-size:52px;margin-bottom:14px;opacity:.35;animation:float 3s ease-in-out infinite}
+.empty p{font-size:15px;margin-bottom:6px;font-weight:500}
+.empty small{font-size:12px}
+
+/* === TOAST === */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:var(--radius2);font-size:13px;font-weight:700;z-index:999;opacity:0;transform:translateY(16px) scale(.95);transition:all .35s var(--bounce);pointer-events:none;max-width:400px;box-shadow:0 16px 48px rgba(0,0,0,.5);backdrop-filter:blur(16px);font-family:var(--font)}
+.toast.show{opacity:1;transform:translateY(0) scale(1)}
+.toast-info{background:rgba(59,130,246,.88);color:#fff}
+.toast-error{background:rgba(239,68,68,.88);color:#fff}
+.toast-ok{background:rgba(34,197,94,.88);color:#fff}
+
+/* === LOG === */
+.log-panel{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;max-height:120px;overflow-y:auto;font-family:var(--mono);font-size:10px;color:var(--text3);display:none;transition:all .2s var(--ease)}
+.log-panel.on{display:block}
+.log-line{padding:2px 0;border-bottom:1px solid rgba(30,45,68,.15);animation:fadeLeft .15s var(--ease)}
+.log-line .time{color:var(--text3);margin-right:8px;opacity:.5}
+.log-line .msg{color:var(--text2)}
+.log-line.err .msg{color:var(--red)}
+
+/* === SPINNER === */
+.spin{width:12px;height:12px;border:2px solid rgba(60,100,160,.15);border-top-color:var(--accent);border-radius:50%;animation:sp .5s cubic-bezier(.4,0,.2,1) infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeLeft{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+@keyframes alertSlide{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes logoPulse{0%,100%{box-shadow:0 4px 20px rgba(59,130,246,.3)}50%{box-shadow:0 4px 28px rgba(59,130,246,.45)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes countPop{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+
+/* === RESPONSIVE === */
+@media(max-width:1000px){
+  .main-grid{grid-template-columns:1fr;gap:14px}
+  .alert-section{max-height:50vh}
+  .alert-pair{grid-template-columns:1fr;gap:6px}
+  .alert-pair .pair-arrow{flex-direction:row;padding:4px 0}
+  .alert-pair .pair-arrow .arrow-line{width:auto;height:1px;flex:1}
+}
+@media(max-width:600px){
+  .container{padding:12px 14px}
+  .stat-val{font-size:20px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .header{flex-direction:column;align-items:flex-start}
+  .controls{width:100%}
+  .quick-dates{display:none}
+  thead th,tbody td{padding:5px 8px}
+  .mkt-row td{padding-left:20px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-icon">⛅</div>
+      <div class="logo"><h1 id="hTitle">Polymarket 天气警报<small id="hSub"></small></h1></div>
+    </div>
+    <div class="controls">
+      <div class="input-group">
+        <label id="lblDate">日期</label>
+        <input type="date" id="datePicker">
+      </div>
+      <div class="quick-dates" id="quickDates"></div>
+      <div class="input-group">
+        <label id="lblThr">阈值</label>
+        <input type="number" id="threshold" value="99.7" step="0.1" min="50" max="100">
+        <span>%</span>
+      </div>
+      <button class="btn btn-lang" id="langBtn" onclick="toggleLang()">EN</button>
+      <button class="btn btn-ghost btn-auto" id="autoBtn" onclick="toggleAuto()">10m</button>
+      <button class="btn btn-scan" id="scanBtn" onclick="scan()">
+        <span id="scanIco">⚡</span><span id="scanTxt">一键扫描</span>
+      </button>
+      <button class="btn btn-ghost" onclick="window.open('https://polymarket.com/tag/weather','_blank')" id="weatherBtn">天气板块</button>
+      <div class="input-group font-size-group">
+        <label style="font-size:12px">A</label>
+        <button class="btn btn-ghost" onclick="changeFontSize(-1)" title="缩小字体" style="padding:6px 8px;min-width:auto">−</button>
+        <span id="fontSizeVal" style="font-size:11px;color:var(--text);font-weight:700;min-width:30px;text-align:center">100%</span>
+        <button class="btn btn-ghost" onclick="changeFontSize(1)" title="放大字体" style="padding:6px 8px;min-width:auto">+</button>
+      </div>
+      <button class="btn btn-ghost" id="logToggle" onclick="toggleLog()">日志</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" id="stats" style="display:none">
+    <div class="stat"><div class="stat-label" id="lblCities">城市</div><div class="stat-val c1" id="sCity">0</div></div>
+    <div class="stat"><div class="stat-label" id="lblMarkets">市场</div><div class="stat-val c2" id="sMkt">0</div></div>
+    <div class="stat"><div class="stat-label" id="lblAlerts">警报</div><div class="stat-val c3" id="sAlert">0</div></div>
+    <div class="stat"><div class="stat-label" id="lblTime">耗时</div><div class="stat-val c4" id="sTime">-</div></div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress" id="prog"><div class="progress-bar" id="progBar"></div></div>
+
+  <!-- Main Content: 左右两栏 -->
+  <div id="mainContent" style="display:none" class="main-grid">
+
+    <!-- 左栏：搜索 + 城市列表 -->
+    <div class="left-panel">
+      <div class="toolbar" id="toolbar">
+        <div class="search-wrap"><input class="search-box" id="searchBox" placeholder="搜索城市..." oninput="debounceFilter()"><span class="ico">🔍</span></div>
+        <div class="count" id="rowCount"></div>
+      </div>
+      <div id="tableSec">
+        <div class="table-wrap" id="tableWrap" style="max-height:68vh;overflow-y:auto">
+          <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右栏：触发警报 -->
+    <div id="alertSec" class="alert-section" style="display:none">
+      <div class="alert-header">
+        <div class="alert-icon high" id="alertIcon">🔔</div>
+        <div class="alert-header-text"><h2 id="lblTriggeredText">触发警报</h2><small id="alertSub">概率达到阈值的温度市场</small></div>
+        <div class="alert-badge high" id="alertCount">0</div>
+      </div>
+      <div class="alert-pair-list" id="alertList"></div>
+    </div>
+  </div>
+
+  <!-- Empty -->
+  <div class="empty" id="emptyState">
+    <div class="empty-icon">🌤️</div>
+    <p id="emptyTitle">点击「一键扫描」监控 Polymarket 天气温度市场</p>
+    <small id="emptySub">覆盖全球 60+ 城市 · Gamma API 实时数据</small>
+  </div>
+
+  <!-- Log -->
+  <div class="log-panel" id="logPanel"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========== CITY DATA ========== */
+var CN={nyc:'New York City',chicago:'Chicago',miami:'Miami',dallas:'Dallas',seattle:'Seattle',atlanta:'Atlanta','los-angeles':'Los Angeles','san-francisco':'San Francisco',houston:'Houston',denver:'Denver',austin:'Austin',toronto:'Toronto',london:'London',paris:'Paris',berlin:'Berlin',madrid:'Madrid',rome:'Rome',amsterdam:'Amsterdam',milan:'Milan',munich:'Munich',warsaw:'Warsaw',moscow:'Moscow',istanbul:'Istanbul',ankara:'Ankara','tel-aviv':'Tel Aviv',dubai:'Dubai',jeddah:'Jeddah',karachi:'Karachi',mumbai:'Mumbai',delhi:'Delhi',lucknow:'Lucknow',dhaka:'Dhaka',bangkok:'Bangkok',singapore:'Singapore','kuala-lumpur':'Kuala Lumpur',jakarta:'Jakarta',manila:'Manila','hong-kong':'Hong Kong',taipei:'Taipei',shanghai:'Shanghai',beijing:'Beijing',shenzhen:'Shenzhen',guangzhou:'Guangzhou',chengdu:'Chengdu',wuhan:'Wuhan',chongqing:'Chongqing',qingdao:'Qingdao',tokyo:'Tokyo',seoul:'Seoul',busan:'Busan',sydney:'Sydney',melbourne:'Melbourne',wellington:'Wellington',auckland:'Auckland','sao-paulo':'Sao Paulo','buenos-aires':'Buenos Aires','mexico-city':'Mexico City',lima:'Lima',bogota:'Bogota','panama-city':'Panama City',cairo:'Cairo',lagos:'Lagos',nairobi:'Nairobi','cape-town':'Cape Town',helsinki:'Helsinki'};
+var ZH={nyc:'纽约',chicago:'芝加哥',miami:'迈阿密',dallas:'达拉斯',seattle:'西雅图',atlanta:'亚特兰大','los-angeles':'洛杉矶','san-francisco':'旧金山',houston:'休斯顿',denver:'丹佛',austin:'奥斯汀',toronto:'多伦多',london:'伦敦',paris:'巴黎',berlin:'柏林',madrid:'马德里',rome:'罗马',amsterdam:'阿姆斯特丹',milan:'米兰',munich:'慕尼黑',warsaw:'华沙',moscow:'莫斯科',istanbul:'伊斯坦布尔',ankara:'安卡拉','tel-aviv':'特拉维夫',dubai:'迪拜',jeddah:'吉达',karachi:'卡拉奇',mumbai:'孟买',delhi:'德里',lucknow:'勒克瑙',dhaka:'达卡',bangkok:'曼谷',singapore:'新加坡','kuala-lumpur':'吉隆坡',jakarta:'雅加达',manila:'马尼拉','hong-kong':'香港',taipei:'台北',shanghai:'上海',beijing:'北京',shenzhen:'深圳',guangzhou:'广州',chengdu:'成都',wuhan:'武汉',chongqing:'重庆',qingdao:'青岛',tokyo:'东京',seoul:'首尔',busan:'釜山',sydney:'悉尼',melbourne:'墨尔本',wellington:'惠灵顿',auckland:'奥克兰','sao-paulo':'圣保罗','buenos-aires':'布宜诺斯艾利斯','mexico-city':'墨西哥城',lima:'利马',bogota:'波哥大','panama-city':'巴拿马城',cairo:'开罗',lagos:'拉各斯',nairobi:'内罗毕','cape-town':'开普敦',helsinki:'赫尔辛基'};
+var FLAGS={nyc:'🇺🇸',chicago:'🇺🇸',miami:'🇺🇸',dallas:'🇺🇸',seattle:'🇺🇸',atlanta:'🇺🇸','los-angeles':'🇺🇸','san-francisco':'🇺🇸',houston:'🇺🇸',denver:'🇺🇸',austin:'🇺🇸',toronto:'🇨🇦',london:'🇬🇧',paris:'🇫🇷',berlin:'🇩🇪',madrid:'🇪🇸',rome:'🇮🇹',amsterdam:'🇳🇱',milan:'🇮🇹',munich:'🇩🇪',warsaw:'🇵🇱',moscow:'🇷🇺',istanbul:'🇹🇷',ankara:'🇹🇷','tel-aviv':'🇮🇱',dubai:'🇦🇪',jeddah:'🇸🇦',karachi:'🇵🇰',mumbai:'🇮🇳',delhi:'🇮🇳',lucknow:'🇮🇳',dhaka:'🇧🇩',bangkok:'🇹🇭',singapore:'🇸🇬','kuala-lumpur':'🇲🇾',jakarta:'🇮🇩',manila:'🇵🇭','hong-kong':'🇭🇰',taipei:'🇹🇼',shanghai:'🇨🇳',beijing:'🇨🇳',shenzhen:'🇨🇳',guangzhou:'🇨🇳',chengdu:'🇨🇳',wuhan:'🇨🇳',chongqing:'🇨🇳',qingdao:'🇨🇳',tokyo:'🇯🇵',seoul:'🇰🇷',busan:'🇰🇷',sydney:'🇦🇺',melbourne:'🇦🇺',wellington:'🇳🇿',auckland:'🇳🇿','sao-paulo':'🇧🇷','buenos-aires':'🇦🇷','mexico-city':'🇲🇽',lima:'🇵🇪',bogota:'🇨🇴','panama-city':'🇵🇦',cairo:'🇪🇬',lagos:'🇳🇬',nairobi:'🇰🇪','cape-town':'🇿🇦',helsinki:'🇫🇮'};
+/* 城市时区偏移（小时），标准时间，不含夏令时 */
+var TZ={nyc:-5,chicago:-6,miami:-5,dallas:-6,seattle:-8,atlanta:-5,'los-angeles':-8,'san-francisco':-8,houston:-6,denver:-7,austin:-6,toronto:-5,london:0,paris:1,berlin:1,madrid:1,rome:1,amsterdam:1,milan:1,munich:1,warsaw:1,moscow:3,istanbul:3,ankara:3,'tel-aviv':2,dubai:4,jeddah:3,karachi:5,mumbai:5.5,delhi:5.5,lucknow:5.5,dhaka:6,bangkok:7,singapore:8,'kuala-lumpur':8,jakarta:7,manila:8,'hong-kong':8,taipei:8,shanghai:8,beijing:8,shenzhen:8,guangzhou:8,chengdu:8,wuhan:8,chongqing:8,qingdao:8,tokyo:9,seoul:9,busan:9,sydney:10,melbourne:10,wellington:12,auckland:12,'sao-paulo':-3,'buenos-aires':-3,'mexico-city':-6,lima:-5,bogota:-5,'panama-city':-5,cairo:2,lagos:1,nairobi:3,'cape-town':2,helsinki:2};
+var MN_EN=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var MN_ZH=['','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+var MONTH_NAMES=['january','february','march','april','may','june','july','august','september','october','november','december'];
+
+/* ========== i18n ========== */
+var LANG='zh';
+var I18N={
+  zh:{title:'Polymarket 天气警报',subtitle:'选择日期 · 扫描城市温度市场 · 概率达阈值时触发警报',threshold:'阈值',date:'日期',scan:'一键扫描',scanning:'扫描中...',weatherBoard:'天气板块',log:'日志',cities:'城市',markets:'市场',alerts:'警报',time:'耗时',triggeredAlerts:'触发警报',city:'城市',option:'选项',options:'选项',alert:'警报',all:'全部',searchPlaceholder:'搜索城市...',emptyTitle:'点击「一键扫描」监控 Polymarket 天气温度市场',emptySub:'覆盖全球 60+ 城市 · Gamma API 实时数据',scanStart:'开始扫描...',scanFetched:'已获取 {n} 个温度事件',scanDone:'分析完成：{c} 个城市, {m} 个市场, {a} 个警报',alertFound:'发现 {n} 个警报！',noAlert:'扫描完成，{c} 个城市，无警报',scanFail:'扫描失败',goPolymarket:'Polymarket',fetchingOffset:'正在获取 offset {n}...',langSwitch:'EN',today:'当天',tomorrow:'明天',dayAfter:'后天',autoRefresh:'10分钟自动',noMarkets:'暂无市场数据'},
+  en:{title:'Polymarket Weather Alert',subtitle:'Select date · Scan city temperature markets · Alert on threshold',threshold:'Threshold',date:'Date',scan:'Scan',scanning:'Scanning...',weatherBoard:'Weather',log:'Log',cities:'Cities',markets:'Markets',alerts:'Alerts',time:'Time',triggeredAlerts:'Triggered Alerts',city:'City',option:'Option',options:'Options',alert:'Alert',all:'All',searchPlaceholder:'Search city...',emptyTitle:'Click <b>Scan</b> to monitor Polymarket weather temperature markets',emptySub:'Covers 60+ cities worldwide · Real-time from Gamma API',scanStart:'Starting scan...',scanFetched:'Fetched {n} temperature events',scanDone:'Analysis done: {c} cities, {m} markets, {a} alerts',alertFound:'{n} alerts found!',noAlert:'Scan complete, {c} cities, no alerts',scanFail:'Scan failed',goPolymarket:'Polymarket',fetchingOffset:'Fetching offset {n}...',langSwitch:'中文',today:'Today',tomorrow:'Tomorrow',dayAfter:'Day+2',autoRefresh:'Auto',noMarkets:'No market data'}
+};
+function T(k){return I18N[LANG][k]||k}
+function fmtDate(y,m,d){return y+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d}
+
+/* ========== GLOBALS ========== */
+var API='https://gamma-api.polymarket.com/events';
+var PROXIES=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?','https://api.codetabs.com/v1/proxy?quest='];
+var gData=null,gFilter='all',gSearch='',filterTimer=null;
+
+/* ========== UTILS ========== */
+function $(id){return document.getElementById(id)}
+function fmtPct(v){return(v*100).toFixed(1)}
+function cityKey(s){var m=s.match(/highest-temperature-in-(.+?)-on-/);return m?m[1]:null}
+function cityEN(s){var k=cityKey(s);return k?(CN[k]||k.replace(/-/g,' ')):s}
+function cityZH(s){var k=cityKey(s);return k?(ZH[k]||''):''}
+function cityFlag(s){var k=cityKey(s);return k?(FLAGS[k]||'🌐'):''}
+function parseP(s){try{var p=JSON.parse(s);return{y:parseFloat(p[0]),n:parseFloat(p[1])}}catch(e){return null}}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function slugMonth(s){var m=s.match(/-on-([a-z]+)-(\d+)-(\d+)$/i);if(!m)return null;return{month:MONTH_NAMES.indexOf(m[1].toLowerCase())+1,day:parseInt(m[2]),year:parseInt(m[3])}}
+function getLabel(zh,en){return LANG==='zh'?(zh?zh+' / '+en:en):en}
+
+/* ========== SETTLEMENT TIME ========== */
+/* 计算城市本地目标日期 23:59 对应的 UTC 时间戳 */
+function getSettleUTC(citySlug,year,month,day){
+  var offset=TZ[citySlug]||0;
+  /* 本地 23:59 → UTC：(23*60+59) - offset*60 = UTC总分钟数 */
+  var totalUTCMin=(23*60+59)-offset*60;
+  var utcH=Math.floor(totalUTCMin/60);
+  var utcM=totalUTCMin-utcH*60;
+  if(utcM<0){utcM+=60;utcH-=1}
+  return new Date(Date.UTC(year,month-1,day,utcH,Math.round(utcM),0)).getTime();
+}
+/* 格式化剩余时间 */
+function fmtRemain(ms){
+  if(ms<=0)return LANG==='zh'?'已结算':'Settled';
+  var h=Math.floor(ms/3600000);
+  var m=Math.floor((ms%3600000)/60000);
+  if(h>=24){var d=Math.floor(h/24);h=h%24;return d+'d '+h+'h'}
+  if(h>0)return h+'h '+m+'m';
+  return m+'m';
+}
+/* 获取城市本地结算时间字符串 */
+function fmtSettleTime(citySlug,year,month,day){
+  var offset=TZ[citySlug]||0;
+  var offH=Math.floor(Math.abs(offset));
+  var offM=Math.round((Math.abs(offset)-offH)*60);
+  var sign=offset>=0?'+':'-';
+  var tzStr='UTC'+sign+(offset<0?'':'')+(offH<10?'0':'')+offH+(offM>0?':'+offM:'');
+  if(LANG==='zh'){
+    return month+'月'+day+'日 23:59 ('+tzStr+')';
+  }
+  var mn=MONTH_NAMES[month-1];
+  return mn+' '+day+', '+year+' 23:59 ('+tzStr+')';
+}
+/* 倒计时定时器 */
+var settleTimer=null;
+function startSettleTimer(){
+  if(settleTimer)clearInterval(settleTimer);
+  settleTimer=setInterval(updateSettleCountdown,30000);
+}
+function updateSettleCountdown(){
+  var now=Date.now();
+  var els=document.querySelectorAll('[data-settle-ts]');
+  for(var i=0;i<els.length;i++){
+    var ts=parseInt(els[i].getAttribute('data-settle-ts'));
+    els[i].textContent=fmtRemain(ts-now);
+    if(ts-now<=0)els[i].style.color='var(--green)';
+    else if(ts-now<3600000)els[i].style.color='var(--red)';
+    else els[i].style.color='var(--orange)';
+  }
+}
+
+/* ========== ANIMATED COUNTER ========== */
+function animateNum(el,target,suffix){
+  suffix=suffix||'';
+  var start=parseInt(el.textContent)||0;if(start===target){el.textContent=target+suffix;return}
+  var diff=target-start,steps=Math.min(Math.abs(diff),20),step=0;
+  var dur=350/steps;
+  el.classList.add('pop');
+  var iv=setInterval(function(){
+    step++;var p=step/steps;
+    var ease=1-Math.pow(1-p,3);
+    el.textContent=Math.round(start+diff*ease)+suffix;
+    if(step>=steps){clearInterval(iv);el.textContent=target+suffix;setTimeout(function(){el.classList.remove('pop')},150)}
+  },dur);
+}
+
+/* ========== API ========== */
+function ftFetch(url,ms){return new Promise(function(ok,no){var t=setTimeout(function(){no(new Error('timeout'))},ms);fetch(url).then(function(r){clearTimeout(t);ok(r)}).catch(function(e){clearTimeout(t);no(e)})})}
+async function apiGet(url){
+  try{log('  直接请求...');var r=await ftFetch(url,10000);if(r.ok){log('  ✓ 直接请求成功');return r.json()}log('  ✗ HTTP '+r.status,false)}catch(e){log('  ✗ '+e.message,false)}
+  for(var i=0;i<PROXIES.length;i++){
+    try{var pu=PROXIES[i]+encodeURIComponent(url);
+    log('  Proxy'+(i+1)+'...');
+    var r2=await ftFetch(pu,15000);
+    if(r2.ok){log('  ✓ Proxy'+(i+1)+' 成功');return r2.json()}
+    log('  ✗ Proxy'+(i+1)+' '+r2.status,false);
+    }catch(e2){log('  ✗ Proxy'+(i+1)+' '+e2.message,false)}
+  }
+  throw new Error(LANG==='zh'?'网络请求失败':'Network failed');
+}
+
+/* ========== LOG ========== */
+function log(msg,err){
+  var p=$('logPanel');p.classList.add('on');
+  var d=new Date(),ts=pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+  p.innerHTML+='<div class="'+(err?'log-line err':'log-line')+'"><span class="time">['+ts+']</span><span class="msg">'+esc(msg)+'</span></div>';
+  p.scrollTop=p.scrollHeight;
+}
+function pad(n){return n<10?'0'+n:''+n}
+function toggleLog(){$('logPanel').classList.toggle('on')}
+
+/* ========== TOAST ========== */
+function toast(msg,type){var t=$('toast');t.textContent=msg;t.className='toast toast-'+(type||'info')+' show';clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show')},4000)}
+
+/* ========== FETCH ========== */
+async function fetchEvents(){
+  var all=[],offset=0,limit=100;
+  while(true){
+    var url=API+'?tag_slug=daily-temperature&limit='+limit+'&closed=false&offset='+offset;
+    log(T('fetchingOffset').replace('{n}',offset));
+    try{var data=await apiGet(url);}catch(e){log('offset '+offset+' '+e.message,false);break}
+    if(!data||!data.length){log('  — done');break}
+    var temps=data.filter(function(e){return e.slug&&e.slug.indexOf('highest-temperature')!==-1});
+    all=all.concat(temps);
+    var pct=Math.min(95,((offset+limit)/200)*100);
+    $('progBar').style.width=pct+'%';
+    if(data.length<limit){log('  — 末页 (返回'+data.length+'条)');break}
+    offset+=limit;if(offset>300)break;
+  }
+  return all;
+}
+
+/* ========== ANALYZE ========== */
+function analyze(events){
+  var alerts=[],map={},total=0;
+  var tv=$('datePicker').value;if(!tv)return{alerts:alerts,map:map,dates:[],total:0};
+  var dp=tv.split('-');var tY=parseInt(dp[0]),tM=parseInt(dp[1]),tD=parseInt(dp[2]);
+  for(var i=0;i<events.length;i++){
+    var ev=events[i],ck=cityKey(ev.slug);if(!ck)continue;
+    var dm=slugMonth(ev.slug);
+    if(dm&&((dm.month!==tM)||(dm.day!==tD)||(dm.year!==tY)))continue;
+    var en=cityEN(ev.slug),zh=cityZH(ev.slug),fl=cityFlag(ev.slug);
+    var months=LANG==='zh'?MN_ZH:MN_EN;
+    var dt=LANG==='zh'?tY+'年'+tM+'月'+tD+'日':(months[tM]||tM)+' '+tD+', '+tY;
+    var settleTs=getSettleUTC(ck,tY,tM,tD);
+    if(!map[ev.slug])map[ev.slug]={en:en,zh:zh,dt:dt,fl:fl,slug:ev.slug,ck:ck,settleTs:settleTs,clobTokenIds:ev.clobTokenIds||[],mkts:[],url:ev.url||('https://polymarket.com/event/'+ev.slug)};
+    var mkts=ev.markets;if(!mkts||!mkts.length)continue;
+    for(var j=0;j<mkts.length;j++){
+      var m=mkts[j];if(m.closed)continue;
+      total++;var p=parseP(m.outcomePrices);if(!p)continue;
+      var mUrl=m.clobTokenIds&&m.clobTokenIds[0]?'https://polymarket.com/event/'+ev.slug+'?token='+m.clobTokenIds[0]:(ev.url||('https://polymarket.com/event/'+ev.slug));
+      var mi={title:m.groupItemTitle||m.question,y:p.y,n:p.n,vol:parseFloat(m.volume||0),url:mUrl};
+      map[ev.slug].mkts.push(mi);
+      var yp=p.y*100,np=p.n*100;
+      var yA=yp>=99.66&&yp<=99.71,nA=np>=99.66&&np<=99.71;
+      if(yA||nA){var side=yA?'YES':'NO',pct=yA?yp:np;
+        alerts.push({en:en,zh:zh,dt:dt,fl:fl,title:mi.title,side:side,pct:pct,yp:yp,np:np,url:mi.url,ck:ck,settleTs:settleTs});
+      }
+    }
+  }
+  alerts.sort(function(a,b){return b.pct-a.pct});
+  /* 给城市标记最高警报概率，方便排序 */
+  var alertCityMax={};
+  for(var i=0;i<alerts.length;i++){
+    var ak=alerts[i].en;
+    if(!alertCityMax[ak]||alerts[i].pct>alertCityMax[ak])alertCityMax[ak]=alerts[i].pct;
+  }
+  for(var sk in map){
+    map[sk]._alertPct=alertCityMax[sk]||0;
+    map[sk]._hasAlert=!!alertCityMax[sk];
+  }
+  return{alerts:alerts,map:map,dates:[dt],total:total};
+}
+
+/* ========== RENDER ALERTS ========== */
+function renderAlerts(alerts){
+  var sec=$('alertSec'),list=$('alertList'),badge=$('alertCount'),icon=$('alertIcon');
+  if(!alerts.length){sec.style.display='none';return}
+  sec.style.display='flex';badge.textContent=alerts.length;
+  var hasHigh=false;
+  for(var i=0;i<alerts.length;i++){if(alerts[i].pct>=99.69){hasHigh=true;break}}
+  var lvl=hasHigh?'high':'warn';
+  badge.className='alert-badge '+lvl;
+  icon.className='alert-icon '+lvl;
+  var h='',now=Date.now();
+  for(var i=0;i<alerts.length;i++){
+    var a=alerts[i],label=getLabel(a.zh,a.en);
+    var cls=a.pct>=99.69?'high':'warn';
+    var arrowIcon=cls==='high'?'🔴':'🟡';
+    var remain=fmtRemain(a.settleTs-now);
+    var remainColor=a.settleTs-now<=0?'var(--green)':a.settleTs-now<3600000?'var(--red)':'var(--orange)';
+    h+='<div class="alert-pair '+cls+'" style="animation-delay:'+i*80+'ms">'
+      /* 左 - 城市 */
+      +'<a href="'+a.url+'" target="_blank" rel="noopener" class="pair-city">'
+        +'<span class="city-flag">'+a.fl+'</span>'
+        +'<div class="city-info">'
+          +'<div class="city-name">'+esc(label)+'</div>'
+          +'<div class="city-date">'+a.dt+'</div>'
+          +'<div class="city-settle" style="color:'+remainColor+';font-size:10px;margin-top:1px;font-weight:700;font-family:var(--mono)"><span data-settle-ts="'+a.settleTs+'">'+remain+'</span></div>'
+        +'</div>'
+        +'<span class="city-link-ico">↗</span>'
+      +'</a>'
+      /* 中 - 连接线 */
+      +'<div class="pair-arrow"><div class="arrow-line"></div><div class="arrow-dot '+cls+'">'+arrowIcon+'</div></div>'
+      /* 右 - 警报 */
+      +'<div class="pair-alert">'
+        +'<div class="alert-detail-box">'
+          +'<div class="alert-detail-title">'+esc(a.title)+'</div>'
+          +'<div class="alert-detail-tags">'
+            +'<span class="tag '+(a.side==='YES'?'tag-yes':'tag-no')+'">'+a.side+'</span>'
+            +'<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">Y '+a.yp.toFixed(1)+' / N '+a.np.toFixed(1)+'</span>'
+          +'</div>'
+        +'</div>'
+        +'<div class="alert-detail-pct">'+a.pct.toFixed(2)+'%</div>'
+        +'<a href="'+a.url+'" target="_blank" rel="noopener" class="alert-pair-link" title="'+esc(a.title)+'">↗ Trade</a>'
+      +'</div>'
+    +'</div>';
+  }
+  list.innerHTML=h;
+}
+
+/* ========== RENDER TABLE ========== */
+function renderTable(){
+  if(!gData)return;
+  var cities=Object.values(gData.map);
+  /* 排序：有警报的排前面（按警报概率降序），无警报的排后面（字母序） */
+  cities.sort(function(a,b){
+    if(a._hasAlert&&b._hasAlert)return b._alertPct-a._alertPct;
+    if(a._hasAlert)return -1;
+    if(b._hasAlert)return 1;
+    return a.en.localeCompare(b.en);
+  });
+  if(gSearch){var s=gSearch.toLowerCase();cities=cities.filter(function(c){return c.en.toLowerCase().indexOf(s)!==-1||(c.zh&&c.zh.indexOf(s)!==-1)})}
+  $('rowCount').textContent=cities.length+' '+T('cities');
+  var settleLabel=LANG==='zh'?'结算':'Settle';
+  $('thead').innerHTML='<tr><th style="width:30px"></th><th>'+T('city')+'</th><th>'+T('option')+'</th><th>'+settleLabel+'</th><th>YES</th><th>NO</th><th>'+T('alert')+'</th><th style="width:40px"></th></tr>';
+  var tbody=$('tbody'),h='';var now=Date.now();
+  if(!cities.length){
+    h='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">'+T('noMarkets')+'</td></tr>';
+  }else{
+    for(var i=0;i<cities.length;i++){
+      var c=cities[i],label=getLabel(c.zh,c.en);
+      var hasAlert=c._hasAlert;
+      var remain=fmtRemain(c.settleTs-now);
+      var remainColor=c.settleTs-now<=0?'var(--green)':c.settleTs-now<3600000?'var(--red)':'var(--orange)';
+      h+='<tr class="city-row'+(hasAlert?' has-alert':'')+'" data-city="'+i+'">'
+        +'<td><span class="chevron">▼</span></td>'
+        +'<td>'+c.fl+' <a href="'+c.url+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="city-link">'+esc(label)+'</a></td>'
+        +'<td style="color:var(--text3)">'+c.mkts.length+' '+T('options')+'</td>'
+        +'<td style="color:'+remainColor+';font-family:var(--mono)!important;font-size:12px!important;font-weight:700;white-space:nowrap"><span data-settle-ts="'+c.settleTs+'">'+remain+'</span></td>'
+        +'<td></td><td></td>'
+        +'<td>'+(hasAlert?'<span class="status-dot alert"></span>':'<span class="status-dot ok"></span>')+'</td>'
+      +'</tr>';
+      for(var j=0;j<c.mkts.length;j++){
+        var m=c.mkts[j];var yp=m.y*100,np=m.n*100;
+        var isA=(yp>=99.66&&yp<=99.71)||(np>=99.66&&np<=99.71);
+        var side=isA?(yp>=99.66&&yp<=99.71?'YES':'NO'):'-';
+        var pct=isA?(yp>=99.66&&yp<=99.71?yp:np).toFixed(2)+'%':'';
+        h+='<tr class="mkt-row">'
+          +'<td></td><td></td>'
+          +'<td style="color:var(--text2)">'+esc(m.title)+'</td>'
+          +'<td><span class="bar-wrap"><span class="pct-val" style="color:'+(yp>80?'var(--red)':yp>50?'var(--orange)':'var(--green)')+'">'+fmtPct(m.y)+'%</span><span class="bar bar-yes" style="width:'+Math.max(2,Math.min(yp*0.5,50))+'px"></span></span></td>'
+          +'<td><span class="bar-wrap"><span class="pct-val" style="color:'+(np>80?'var(--green)':np>50?'var(--orange)':'var(--red)')+'">'+fmtPct(m.n)+'%</span><span class="bar bar-no" style="width:'+Math.max(2,Math.min(np*0.5,50))+'px"></span></span></td>'
+        +'<td>'+(isA?'<span class="status-dot alert"></span><span class="tag '+(yp>=99.66&&yp<=99.71?'tag-yes':'tag-no')+'" style="font-size:9px">'+side+' '+pct+'</span>':'<span class="no-alert-tag">—</span>')+'</td>'
+        +'<td><a class="btn-trade" href="'+m.url+'" target="_blank" rel="noopener" title="'+esc(m.title)+'">Trade</a></td>'
+      +'</tr>';
+      }
+    }
+  }
+  tbody.innerHTML=h;
+  initTableClick();
+  $('mainContent').style.display='grid';
+}
+
+function toggleCity(tr){
+  tr.classList.toggle('collapsed');
+  var hide=tr.classList.contains('collapsed');
+  var next=tr.nextElementSibling;
+  while(next && next.classList.contains('mkt-row')){
+    next.style.display=hide?'none':'';
+    next=next.nextElementSibling;
+  }
+}
+/* tbody 事件委托处理城市行点击 */
+function initTableClick(){
+  var tbody=$('tbody');
+  if(tbody._delegated)return;
+  tbody._delegated=true;
+  tbody.addEventListener('click',function(e){
+    var row=e.target.closest('tr.city-row');
+    if(!row)return;
+    /* 如果点击的是链接，不折叠 */
+    if(e.target.closest('a'))return;
+    toggleCity(row);
+  });
+}
+/* 在 renderTable 末尾调用 initTableClick */
+function debounceFilter(){clearTimeout(filterTimer);filterTimer=setTimeout(function(){gSearch=$('searchBox').value;renderTable()},150)}
+
+/* ========== SCAN ========== */
+async function scan(){
+  var btn=$('scanBtn'),ico=$('scanIco'),txt=$('scanTxt');
+  btn.disabled=true;ico.innerHTML='<div class="spin"></div>';txt.textContent=T('scanning');
+  $('emptyState').style.display='none';$('stats').style.display='grid';
+  $('prog').classList.add('on');$('progBar').style.width='3%';$('logPanel').innerHTML='';
+  var t0=Date.now();
+  try{
+    log(T('scanStart'));
+    var events=await fetchEvents();
+    log(T('scanFetched').replace('{n}',events.length));
+    $('progBar').style.width='97%';
+    gData=analyze(events);gData._raw=events;
+    var nc=Object.keys(gData.map).length;
+    log(T('scanDone').replace('{c}',nc).replace('{m}',gData.total).replace('{a}',gData.alerts.length));
+    animateNum($('sCity'),nc);animateNum($('sMkt'),gData.total);animateNum($('sAlert'),gData.alerts.length);
+    $('sTime').textContent=((Date.now()-t0)/1000).toFixed(1)+'s';$('progBar').style.width='100%';
+    renderAlerts(gData.alerts);renderTable();startSettleTimer();
+    setTimeout(function(){$('prog').classList.remove('on')},600);
+    if(gData.alerts.length){toast(T('alertFound').replace('{n}',gData.alerts.length),'error');playSound()}
+    else{toast(T('noAlert').replace('{c}',nc),'ok')}
+  }catch(err){toast(T('scanFail')+': '+err.message,'error');log('ERROR: '+err.message,true);$('prog').classList.remove('on')}
+  btn.disabled=false;ico.innerHTML='⚡';txt.textContent=T('scan');
+  if(autoTimer)autoCountdown=600;
+}
+
+/* ========== AUTO SCAN (10分钟) ========== */
+var autoTimer=null,autoCountdown=0;
+function toggleAuto(){
+  var btn=$('autoBtn');
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;btn.classList.remove('on');btn.textContent='10m';return}
+  btn.classList.add('on');
+  autoCountdown=600;
+  function tick(){
+    autoCountdown--;
+    if(autoCountdown<=0){scan();autoCountdown=600}
+    var m=Math.floor(autoCountdown/60),s=autoCountdown%60;
+    btn.textContent=(m>0?m+'m':'')+s+'s';
+  }
+  tick();
+  autoTimer=setInterval(tick,1000);
+}
+
+/* ========== SOUND ========== */
+function playSound(){
+  try{var ctx=new(window.AudioContext||window.webkitAudioContext)();
+  var notes=[523,659,784,1047];
+  for(var i=0;i<notes.length;i++){var o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+    o.frequency.setValueAtTime(notes[i],ctx.currentTime+i*.12);o.type='sine';
+    g.gain.setValueAtTime(.15,ctx.currentTime+i*.12);g.gain.exponentialRampToValueAtTime(.01,ctx.currentTime+i*.12+.15);
+    o.start(ctx.currentTime+i*.12);o.stop(ctx.currentTime+i*.12+.15)}
+  }catch(e){}
+}
+
+/* ========== FONT SIZE ========== */
+var gFontSize=100;
+function changeFontSize(dir){
+  gFontSize=Math.max(70,Math.min(150,gFontSize+dir*5));
+  document.documentElement.style.fontSize=gFontSize+'%';
+  $('fontSizeVal').textContent=gFontSize+'%';
+  try{localStorage.setItem('pw_alert_fontsize',gFontSize)}catch(e){}
+}
+(function(){
+  try{
+    var s=localStorage.getItem('pw_alert_fontsize');
+    if(s){gFontSize=parseInt(s);if(isNaN(gFontSize))gFontSize=100;}
+    document.documentElement.style.fontSize=gFontSize+'%';
+    document.addEventListener('DOMContentLoaded',function(){$('fontSizeVal').textContent=gFontSize+'%'});
+  }catch(e){}
+})();
+
+/* ========== LANGUAGE ========== */
+function toggleLang(){LANG=LANG==='zh'?'en':'zh';applyLang();initQuickDates();if(gData){gData=analyze(gData._raw||[]);gData._raw=gData._raw||gData._raw;renderAlerts(gData.alerts);renderTable()}}
+function applyLang(){
+  $('hTitle').innerHTML=T('title')+'<small>'+T('subtitle')+'</small>';
+  $('lblThr').textContent=T('threshold');$('lblDate').textContent=T('date');
+  $('scanTxt').textContent=T('scan');$('weatherBtn').textContent=T('weatherBoard');
+  $('logToggle').textContent=T('log');$('langBtn').textContent=T('langSwitch');
+  $('lblCities').textContent=T('cities');$('lblMarkets').textContent=T('markets');
+  $('lblAlerts').textContent=T('alerts');$('lblTime').textContent=T('time');
+  $('lblTriggeredText').textContent=T('triggeredAlerts');
+  $('searchBox').placeholder=T('searchPlaceholder');
+  $('emptyTitle').innerHTML=T('emptyTitle');$('emptySub').textContent=T('emptySub');
+  if(autoInterval)$('autoBtn').innerHTML=T('autoRefresh')+' '+autoSec+'s';
+  else $('autoBtn').textContent='10m';
+}
+
+/* ========== QUICK DATES ========== */
+function initQuickDates(){
+  var now=new Date(),bar=$('quickDates'),h='';
+  var labels=[T('today'),T('tomorrow'),T('dayAfter')];
+  for(var i=0;i<=2;i++){
+    var d=new Date(now);d.setDate(d.getDate()+i);
+    var val=fmtDate(d.getFullYear(),d.getMonth()+1,d.getDate());
+    h+='<span class="qdate'+(i===0?' on':'')+'" data-val="'+val+'" onclick="pickQuick(this,\''+val+'\')">'+labels[i]+'</span>';
+  }
+  bar.innerHTML=h;
+}
+function pickQuick(el,val){
+  document.querySelectorAll('.qdate').forEach(function(q){q.classList.remove('on')});
+  el.classList.add('on');$('datePicker').value=val;
+}
+
+/* ========== KEYBOARD SHORTCUTS ========== */
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();scan()}
+  if(e.key==='l'||e.key==='L')toggleLog();
+  if(e.key==='a'||e.key==='A')toggleAuto();
+});
+
+/* ========== INIT ========== */
+(function(){
+  var now=new Date(),tm=new Date(now);
+  $('datePicker').value=fmtDate(tm.getFullYear(),tm.getMonth()+1,tm.getDate());
+  initQuickDates();applyLang();
+})();
+</script>
+</body>
+</html>
