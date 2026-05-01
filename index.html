@@ -170,6 +170,26 @@ body::after{content:'';position:fixed;inset:0;
 .search-box::placeholder{color:var(--text3)}
 .count{font-size:11px;color:var(--text3);margin-left:auto;white-space:nowrap;font-family:var(--mono)}
 
+/* === VOLUME RANK === */
+.vol-rank{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;animation:fadeUp .4s var(--ease)}
+.vol-rank-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.vol-rank-header h3{font-size:12px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:5px}
+.vol-rank-header h3 .rank-ico{font-size:14px}
+.vol-rank-toggle{font-size:10px;color:var(--accent);cursor:pointer;background:none;border:none;font-weight:600;font-family:var(--font);padding:2px 6px;border-radius:6px;transition:all .15s}
+.vol-rank-toggle:hover{background:var(--accent-glow)}
+.vol-rank-list{display:flex;flex-wrap:wrap;gap:6px 10px}
+.vol-rank-item{display:flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;transition:all .2s var(--ease);cursor:default}
+.vol-rank-item:hover{border-color:var(--accent);background:var(--surface3)}
+.vol-rank-num{font-size:9px;font-weight:800;color:var(--accent);font-family:var(--mono);min-width:14px;text-align:center}
+.vol-rank-item:nth-child(1) .vol-rank-num{color:var(--red)}
+.vol-rank-item:nth-child(2) .vol-rank-num{color:var(--orange)}
+.vol-rank-item:nth-child(3) .vol-rank-num{color:#d97706}
+.vol-rank-flag{font-size:12px}
+.vol-rank-city{font-weight:600;color:var(--text);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vol-rank-vol{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:10px}
+.vol-rank-bar{width:30px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;flex-shrink:0}
+.vol-rank-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .6s var(--ease)}
+
 /* === TABLE === */
 .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:fadeUp .4s var(--ease)}
 table{width:100%;border-collapse:collapse}
@@ -308,6 +328,13 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
       <div class="toolbar" id="toolbar">
         <div class="search-wrap"><input class="search-box" id="searchBox" placeholder="搜索城市..." oninput="debounceFilter()"><span class="ico">🔍</span></div>
         <div class="count" id="rowCount"></div>
+      </div>
+      <div class="vol-rank" id="volRank" style="display:none">
+        <div class="vol-rank-header">
+          <h3><span class="rank-ico">📊</span><span id="volRankTitle">成交量排行</span></h3>
+          <button class="vol-rank-toggle" id="volRankToggle" onclick="toggleVolRank()">收起</button>
+        </div>
+        <div class="vol-rank-list" id="volRankList"></div>
       </div>
       <div id="tableSec">
         <div class="table-wrap" id="tableWrap" style="max-height:68vh;overflow-y:auto">
@@ -557,6 +584,9 @@ function analyze(events){
   for(var sk in map){
     map[sk]._alertPct=alertCityMax[sk]||0;
     map[sk]._hasAlert=!!alertCityMax[sk];
+    /* 计算城市总成交量 */
+    var v=0;for(var vi=0;vi<map[sk].mkts.length;vi++)v+=map[sk].mkts[vi].vol||0;
+    map[sk]._totalVol=v;
   }
   return{alerts:alerts,map:map,dates:[dt],total:total};
 }
@@ -670,6 +700,46 @@ function toggleCity(tr){
     next=next.nextElementSibling;
   }
 }
+
+/* ========== VOLUME RANK ========== */
+var volRankCollapsed=false;
+function toggleVolRank(){
+  volRankCollapsed=!volRankCollapsed;
+  var list=$('volRankList');
+  var btn=$('volRankToggle');
+  list.style.display=volRankCollapsed?'none':'flex';
+  btn.textContent=volRankCollapsed?(LANG==='zh'?'展开':'Expand'):(LANG==='zh'?'收起':'Collapse');
+}
+function fmtVol(v){
+  if(v>=1000000)return (v/1000000).toFixed(1)+'M';
+  if(v>=1000)return (v/1000).toFixed(1)+'K';
+  return v.toFixed(0);
+}
+function renderVolumeRank(){
+  if(!gData||!gData.map){$('volRank').style.display='none';return}
+  var cities=[];
+  for(var sk in gData.map){if(gData.map[sk]._totalVol>0)cities.push(gData.map[sk])}
+  if(!cities.length){$('volRank').style.display='none';return}
+  cities.sort(function(a,b){return b._totalVol-a._totalVol});
+  var topN=cities.slice(0,15);
+  var maxVol=topN[0]._totalVol;
+  var h='';
+  for(var i=0;i<topN.length;i++){
+    var c=topN[i],label=getLabel(c.zh,c.en);
+    var pct=maxVol>0?Math.round(c._totalVol/maxVol*100):0;
+    h+='<div class="vol-rank-item" title="'+esc(label)+': $'+fmtVol(c._totalVol)+'">'
+      +'<span class="vol-rank-num">'+(i+1)+'</span>'
+      +'<span class="vol-rank-flag">'+c.fl+'</span>'
+      +'<span class="vol-rank-city">'+esc(label)+'</span>'
+      +'<span class="vol-rank-bar"><span class="vol-rank-bar-fill" style="width:'+pct+'%"></span></span>'
+      +'<span class="vol-rank-vol">$'+fmtVol(c._totalVol)+'</span>'
+    +'</div>';
+  }
+  $('volRankList').innerHTML=h;
+  $('volRank').style.display='block';
+  $('volRankTitle').textContent=LANG==='zh'?'成交量排行':'Volume Rank';
+  $('volRankToggle').textContent=LANG==='zh'?'收起':'Collapse';
+}
 /* tbody 事件委托处理城市行点击 */
 function initTableClick(){
   var tbody=$('tbody');
@@ -703,7 +773,7 @@ async function scan(){
     log(T('scanDone').replace('{c}',nc).replace('{m}',gData.total).replace('{a}',gData.alerts.length));
     animateNum($('sCity'),nc);animateNum($('sMkt'),gData.total);animateNum($('sAlert'),gData.alerts.length);
     $('sTime').textContent=((Date.now()-t0)/1000).toFixed(1)+'s';$('progBar').style.width='100%';
-    renderAlerts(gData.alerts);renderTable();startSettleTimer();
+    renderAlerts(gData.alerts);renderTable();renderVolumeRank();startSettleTimer();
     setTimeout(function(){$('prog').classList.remove('on')},600);
     if(gData.alerts.length){toast(T('alertFound').replace('{n}',gData.alerts.length),'error');playSound()}
     else{toast(T('noAlert').replace('{c}',nc),'ok')}
@@ -758,7 +828,7 @@ function changeFontSize(dir){
 })();
 
 /* ========== LANGUAGE ========== */
-function toggleLang(){LANG=LANG==='zh'?'en':'zh';applyLang();initQuickDates();if(gData){gData=analyze(gData._raw||[]);gData._raw=gData._raw||gData._raw;renderAlerts(gData.alerts);renderTable()}}
+function toggleLang(){LANG=LANG==='zh'?'en':'zh';applyLang();initQuickDates();if(gData){gData=analyze(gData._raw||[]);gData._raw=gData._raw||gData._raw;renderAlerts(gData.alerts);renderTable();renderVolumeRank()}}
 function applyLang(){
   $('hTitle').innerHTML=T('title')+'<small>'+T('subtitle')+'</small>';
   $('lblThr').textContent=T('threshold');$('lblDate').textContent=T('date');
