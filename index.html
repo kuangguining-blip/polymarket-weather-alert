@@ -37,12 +37,16 @@ body::after{content:'';position:fixed;inset:0;
 ::-webkit-scrollbar-thumb:hover{background:var(--border2)}
 
 /* === HEADER === */
-.header{display:flex;align-items:center;justify-content:space-between;padding:10px 0 16px;margin-bottom:16px;flex-wrap:wrap;gap:12px;animation:fadeDown .5s var(--ease)}
+.header{padding:0 0 16px;margin-bottom:16px;animation:fadeDown .5s var(--ease)}
+.header-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .header-left{display:flex;align-items:center;gap:12px}
 .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 20px rgba(59,130,246,.3);animation:logoPulse 3s ease-in-out infinite}
 .logo h1{font-size:17px;font-weight:800;letter-spacing:-.4px;background:linear-gradient(135deg,var(--text),var(--text2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .logo h1 small{display:block;font-size:11px;font-weight:500;margin-top:1px;-webkit-text-fill-color:var(--text3)}
-.controls{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.header-main-ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.header-sub{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border)}
+.header-sub-left{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.header-sub-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 
 /* === BUTTONS === */
 .btn{padding:6px 14px;border:none;border-radius:var(--radius2);font-size:12px;font-weight:600;cursor:pointer;transition:all .18s var(--ease);display:inline-flex;align-items:center;gap:5px;font-family:var(--font);position:relative;overflow:hidden}
@@ -76,8 +80,8 @@ body::after{content:'';position:fixed;inset:0;
 .qdate.on{background:var(--accent-glow);color:var(--accent);border-color:rgba(59,130,246,.2);box-shadow:0 2px 8px rgba(59,130,246,.1)}
 
 /* === STATS === */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;animation:fadeUp .5s var(--ease) .1s both}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:all .25s var(--ease);position:relative;overflow:hidden}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;animation:fadeUp .5s var(--ease) .1s both}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:all .25s var(--ease);position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.04)}
 .stat::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(255,255,255,.01));pointer-events:none}
 .stat::after{content:'';position:absolute;top:-20px;right:-20px;width:60px;height:60px;border-radius:50%;opacity:.04}
 .stat:nth-child(1)::after{background:var(--accent)}.stat:nth-child(2)::after{background:var(--text)}.stat:nth-child(3)::after{background:var(--red)}.stat:nth-child(4)::after{background:var(--green)}
@@ -94,12 +98,13 @@ body::after{content:'';position:fixed;inset:0;
 @keyframes gradient{0%{background-position:0% 50%}100%{background-position:300% 50%}}
 
 /* === MAIN GRID === */
-.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;animation:fadeUp .4s var(--ease)}
+.main-grid{display:grid;grid-template-columns:58% 1fr;gap:16px;animation:fadeUp .4s var(--ease)}
 .left-panel{display:flex;flex-direction:column;gap:0;height:100%}
 .left-panel .toolbar{margin-bottom:10px}
+.right-panel{display:flex;flex-direction:column;gap:12px;height:100%}
 
 /* === ALERTS === */
-.alert-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 16px;margin-bottom:0;position:relative;overflow:hidden;overflow-y:auto;display:flex;flex-direction:column;height:100%}
+.alert-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 16px 16px;position:relative;overflow:hidden;overflow-y:auto;display:flex;flex-direction:column;flex:1;min-height:0;box-shadow:0 2px 12px rgba(0,0,0,.04)}
 .alert-section::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),var(--red),var(--orange),transparent);opacity:.6}
 .alert-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;position:relative;flex-shrink:0}
 .alert-header .alert-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;animation:alertIconPulse 2s ease-in-out infinite;flex-shrink:0}
@@ -172,27 +177,27 @@ body::after{content:'';position:fixed;inset:0;
 .count{font-size:11px;color:var(--text3);margin-left:auto;white-space:nowrap;font-family:var(--mono)}
 
 /* === VOLUME RANK === */
-.vol-rank{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;animation:fadeUp .4s var(--ease)}
-.vol-rank-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.vol-rank-header h3{font-size:12px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:5px}
-.vol-rank-header h3 .rank-ico{font-size:14px}
-.vol-rank-toggle{font-size:10px;color:var(--accent);cursor:pointer;background:none;border:none;font-weight:600;font-family:var(--font);padding:2px 6px;border-radius:6px;transition:all .15s}
+.vol-rank{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:0;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.04)}
+.vol-rank-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.vol-rank-header h3{font-size:13px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:6px}
+.vol-rank-header h3 .rank-ico{font-size:15px}
+.vol-rank-toggle{font-size:10px;color:var(--accent);cursor:pointer;background:none;border:none;font-weight:600;font-family:var(--font);padding:2px 8px;border-radius:6px;transition:all .15s}
 .vol-rank-toggle:hover{background:var(--accent-glow)}
-.vol-rank-list{display:flex;flex-wrap:wrap;gap:6px 10px}
-.vol-rank-item{display:flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;transition:all .2s var(--ease);cursor:default}
+.vol-rank-list{display:flex;flex-wrap:wrap;gap:6px 8px}
+.vol-rank-item{display:flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;transition:all .2s var(--ease);cursor:default}
 .vol-rank-item:hover{border-color:var(--accent);background:var(--surface3)}
 .vol-rank-num{font-size:9px;font-weight:800;color:var(--accent);font-family:var(--mono);min-width:14px;text-align:center}
 .vol-rank-item:nth-child(1) .vol-rank-num{color:var(--red)}
 .vol-rank-item:nth-child(2) .vol-rank-num{color:var(--orange)}
 .vol-rank-item:nth-child(3) .vol-rank-num{color:#d97706}
-.vol-rank-flag{font-size:12px}
+.vol-rank-flag{font-size:13px}
 .vol-rank-city{font-weight:600;color:var(--text);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vol-rank-vol{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:10px}
-.vol-rank-bar{width:30px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;flex-shrink:0}
+.vol-rank-bar{width:32px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;flex-shrink:0}
 .vol-rank-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .6s var(--ease)}
 
 /* === TABLE === */
-.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:fadeUp .4s var(--ease)}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:fadeUp .4s var(--ease);box-shadow:0 2px 12px rgba(0,0,0,.04)}
 table{width:100%;border-collapse:collapse}
 thead th{padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;cursor:default;backdrop-filter:blur(8px)}
 tbody td{padding:7px 12px;font-size:11px;border-bottom:1px solid rgba(30,45,68,.3);font-family:var(--mono);font-size:11px;transition:background .15s}
@@ -257,18 +262,20 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
 /* === RESPONSIVE === */
 @media(max-width:1000px){
   .main-grid{grid-template-columns:1fr;gap:14px}
-  .left-panel,.alert-section{height:auto}
+  .left-panel,.right-panel,.alert-section{height:auto}
   .alert-section{max-height:50vh}
   .alert-pair{grid-template-columns:1fr;gap:6px}
   .alert-pair .pair-arrow{flex-direction:row;padding:4px 0}
   .alert-pair .pair-arrow .arrow-line{width:auto;height:1px;flex:1}
+  .header-sub{flex-direction:column;align-items:flex-start}
 }
 @media(max-width:600px){
   .container{padding:12px 14px}
   .stat-val{font-size:20px}
   .stats{grid-template-columns:repeat(2,1fr)}
-  .header{flex-direction:column;align-items:flex-start}
-  .controls{width:100%}
+  .header-main-ctrls{width:100%;justify-content:stretch}
+  .header-main-ctrls .btn-scan{flex:1}
+  .header-sub-left,.header-sub-right{width:100%}
   .quick-dates{display:none}
   thead th,tbody td{padding:5px 8px}
   .mkt-row td{padding-left:20px}
@@ -280,34 +287,42 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
 
   <!-- Header -->
   <div class="header">
-    <div class="header-left">
-      <div class="logo-icon">⛅</div>
-      <div class="logo"><h1 id="hTitle">Polymarket 天气警报<small id="hSub"></small></h1></div>
+    <div class="header-top">
+      <div class="header-left">
+        <div class="logo-icon">⛅</div>
+        <div class="logo"><h1 id="hTitle">Polymarket 天气警报<small id="hSub"></small></h1></div>
+      </div>
+      <div class="header-main-ctrls">
+        <div class="input-group">
+          <label id="lblDate">日期</label>
+          <input type="date" id="datePicker">
+        </div>
+        <div class="quick-dates" id="quickDates"></div>
+        <div class="input-group">
+          <label id="lblThr">阈值</label>
+          <input type="number" id="threshold" value="99.7" step="0.1" min="50" max="100">
+          <span>%</span>
+        </div>
+        <button class="btn btn-scan" id="scanBtn" onclick="scan()">
+          <span id="scanIco">⚡</span><span id="scanTxt">一键扫描</span>
+        </button>
+      </div>
     </div>
-    <div class="controls">
-      <div class="input-group">
-        <label id="lblDate">日期</label>
-        <input type="date" id="datePicker">
+    <div class="header-sub">
+      <div class="header-sub-left">
+        <button class="btn btn-ghost btn-auto" id="autoBtn" onclick="toggleAuto()">10m</button>
+        <button class="btn btn-lang" id="langBtn" onclick="toggleLang()">EN</button>
+        <div class="input-group font-size-group">
+          <label style="font-size:12px">A</label>
+          <button class="btn btn-ghost" onclick="changeFontSize(-1)" title="缩小字体" style="padding:6px 8px;min-width:auto">−</button>
+          <span id="fontSizeVal" style="font-size:11px;color:var(--text);font-weight:700;min-width:30px;text-align:center">100%</span>
+          <button class="btn btn-ghost" onclick="changeFontSize(1)" title="放大字体" style="padding:6px 8px;min-width:auto">+</button>
+        </div>
       </div>
-      <div class="quick-dates" id="quickDates"></div>
-      <div class="input-group">
-        <label id="lblThr">阈值</label>
-        <input type="number" id="threshold" value="99.7" step="0.1" min="50" max="100">
-        <span>%</span>
+      <div class="header-sub-right">
+        <button class="btn btn-ghost" onclick="window.open('https://polymarket.com/tag/weather','_blank')" id="weatherBtn">天气板块</button>
+        <button class="btn btn-ghost" id="logToggle" onclick="toggleLog()">日志</button>
       </div>
-      <button class="btn btn-lang" id="langBtn" onclick="toggleLang()">EN</button>
-      <button class="btn btn-ghost btn-auto" id="autoBtn" onclick="toggleAuto()">10m</button>
-      <button class="btn btn-scan" id="scanBtn" onclick="scan()">
-        <span id="scanIco">⚡</span><span id="scanTxt">一键扫描</span>
-      </button>
-      <button class="btn btn-ghost" onclick="window.open('https://polymarket.com/tag/weather','_blank')" id="weatherBtn">天气板块</button>
-      <div class="input-group font-size-group">
-        <label style="font-size:12px">A</label>
-        <button class="btn btn-ghost" onclick="changeFontSize(-1)" title="缩小字体" style="padding:6px 8px;min-width:auto">−</button>
-        <span id="fontSizeVal" style="font-size:11px;color:var(--text);font-weight:700;min-width:30px;text-align:center">100%</span>
-        <button class="btn btn-ghost" onclick="changeFontSize(1)" title="放大字体" style="padding:6px 8px;min-width:auto">+</button>
-      </div>
-      <button class="btn btn-ghost" id="logToggle" onclick="toggleLog()">日志</button>
     </div>
   </div>
 
@@ -331,6 +346,15 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
         <div class="search-wrap"><input class="search-box" id="searchBox" placeholder="搜索城市..." oninput="debounceFilter()"><span class="ico">🔍</span></div>
         <div class="count" id="rowCount"></div>
       </div>
+      <div id="tableSec">
+        <div class="table-wrap" id="tableWrap" style="max-height:75vh;overflow-y:auto">
+          <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右栏：成交量排行 + 触发警报 -->
+    <div class="right-panel">
       <div class="vol-rank" id="volRank" style="display:none">
         <div class="vol-rank-header">
           <h3><span class="rank-ico">📊</span><span id="volRankTitle">成交量排行</span></h3>
@@ -338,21 +362,14 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
         </div>
         <div class="vol-rank-list" id="volRankList"></div>
       </div>
-      <div id="tableSec">
-        <div class="table-wrap" id="tableWrap" style="max-height:68vh;overflow-y:auto">
-          <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
+      <div id="alertSec" class="alert-section" style="display:none">
+        <div class="alert-header">
+          <div class="alert-icon high" id="alertIcon">🔔</div>
+          <div class="alert-header-text"><h2 id="lblTriggeredText">触发警报</h2><small id="alertSub">概率达到阈值的温度市场</small></div>
+          <div class="alert-badge high" id="alertCount">0</div>
         </div>
+        <div class="alert-pair-list" id="alertList"></div>
       </div>
-    </div>
-
-    <!-- 右栏：触发警报 -->
-    <div id="alertSec" class="alert-section" style="display:none">
-      <div class="alert-header">
-        <div class="alert-icon high" id="alertIcon">🔔</div>
-        <div class="alert-header-text"><h2 id="lblTriggeredText">触发警报</h2><small id="alertSub">概率达到阈值的温度市场</small></div>
-        <div class="alert-badge high" id="alertCount">0</div>
-      </div>
-      <div class="alert-pair-list" id="alertList"></div>
     </div>
   </div>
 
