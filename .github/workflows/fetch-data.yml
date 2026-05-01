@@ -1,0 +1,60 @@
+name: Fetch Weather Market Data
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # 每 10 分钟运行一次
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch data from Gamma API
+        run: |
+          ALL_EVENTS='[]'
+          OFFSET=0
+          LIMIT=100
+
+          while true; do
+            echo "Fetching offset $OFFSET..."
+            RESP=$(curl -s --max-time 30 "https://gamma-api.polymarket.com/events?tag_slug=daily-temperature&limit=${LIMIT}&closed=false&offset=${OFFSET}")
+
+            if [ -z "$RESP" ] || [ "$RESP" = "[]" ]; then
+              echo "No more data"
+              break
+            fi
+
+            # 合并数据
+            ALL_EVENTS=$(echo "$ALL_EVENTS" "$RESP" | jq -s 'add')
+
+            COUNT=$(echo "$RESP" | jq 'length')
+            echo "Got $COUNT events"
+
+            if [ "$COUNT" -lt "$LIMIT" ]; then
+              echo "Last page"
+              break
+            fi
+
+            OFFSET=$((OFFSET + LIMIT))
+            if [ "$OFFSET" -gt 500 ]; then
+              echo "Offset limit reached"
+              break
+            fi
+
+            sleep 2
+          done
+
+          # 过滤出最高气温市场
+          echo "$ALL_EVENTS" | jq '[.[] | select(.slug and (.slug | test("highest-temperature")))]' > data.json
+          EVENT_COUNT=$(jq 'length' data.json)
+          echo "Total temperature events: $EVENT_COUNT"
+          echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+
+      - name: Commit and push data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet || (git commit -m "update: weather data $(date -u +%H:%M UTC)" && git push)

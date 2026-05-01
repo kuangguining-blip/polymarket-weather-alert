@@ -362,12 +362,11 @@ function fmtDate(y,m,d){return y+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d}
 
 /* ========== GLOBALS ========== */
 var API='https://gamma-api.polymarket.com/events';
+var DATA_JSON='./data.json';  /* GitHub Actions 缓存的数据文件 */
 var PROXIES=[
   'https://api.allorigins.win/raw?url=',
   'https://corsproxy.io/?',
-  'https://api.codetabs.com/v1/proxy?quest=',
-  'https://cors.sh/?',
-  'https://crossorigin.me/'
+  'https://api.codetabs.com/v1/proxy?quest='
 ];
 var gData=null,gFilter='all',gSearch='',filterTimer=null;
 
@@ -487,6 +486,23 @@ function toast(msg,type){var t=$('toast');t.textContent=msg;t.className='toast t
 
 /* ========== FETCH ========== */
 async function fetchEvents(){
+  /* 优先读 GitHub Actions 缓存的 data.json（零 CORS） */
+  try{
+    log(T('tryLocal')||'读取缓存数据...');
+    var r=await fetch(DATA_JSON+'?t='+Date.now());  /* 加时间戳防缓存 */
+    if(r.ok){
+      var data=await r.json();
+      if(data&&data.length>0){
+        log('✓ '+data.length+(LANG==='zh'?' 条缓存数据':' cached events'));
+        $('progBar').style.width='100%';
+        return data;
+      }
+    }
+    log('  无缓存数据，尝试 API...',false);
+  }catch(e){
+    log('  缓存不可用 ('+e.message+')，尝试 API...',false);
+  }
+  /* 缓存失败时回退到 API + CORS 代理 */
   var all=[],offset=0,limit=100;
   while(true){
     var url=API+'?tag_slug=daily-temperature&limit='+limit+'&closed=false&offset='+offset;
