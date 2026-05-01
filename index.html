@@ -326,16 +326,9 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
   <!-- Main Content: 左右两栏 -->
   <div id="mainContent" style="display:none" class="main-grid">
 
-    <!-- 左栏：成交量排行 + 触发警报 -->
-    <div class="right-panel">
-      <div class="vol-rank" id="volRank" style="display:none">
-        <div class="vol-rank-header">
-          <h3><span class="rank-ico">📊</span><span id="volRankTitle">成交量排行</span></h3>
-          <button class="vol-rank-toggle" id="volRankToggle" onclick="toggleVolRank()">收起</button>
-        </div>
-        <div class="vol-rank-list" id="volRankList"></div>
-      </div>
-      <div id="alertSec" class="alert-section" style="display:none">
+    <!-- 左栏：触发警报 -->
+    <div class="left-panel" style="height:100%;display:flex;flex-direction:column">
+      <div id="alertSec" class="alert-section" style="display:none;flex:1">
         <div class="alert-header">
           <div class="alert-icon high" id="alertIcon">🔔</div>
           <div class="alert-header-text"><h2 id="lblTriggeredText">触发警报</h2><small id="alertSub">概率达到阈值的温度市场</small></div>
@@ -345,13 +338,20 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
       </div>
     </div>
 
-    <!-- 右栏：搜索 + 城市列表 -->
-    <div class="left-panel">
+    <!-- 右栏：成交量排行 + 搜索 + 城市列表 -->
+    <div class="right-panel" style="height:100%;display:flex;flex-direction:column;gap:12px">
+      <div class="vol-rank" id="volRank" style="display:none">
+        <div class="vol-rank-header">
+          <h3><span class="rank-ico">📊</span><span id="volRankTitle">成交量排行</span></h3>
+          <button class="vol-rank-toggle" id="volRankToggle" onclick="toggleVolRank()">收起</button>
+        </div>
+        <div class="vol-rank-list" id="volRankList"></div>
+      </div>
       <div class="toolbar" id="toolbar">
         <div class="search-wrap"><input class="search-box" id="searchBox" placeholder="搜索城市..." oninput="debounceFilter()"><span class="ico">🔍</span></div>
         <div class="count" id="rowCount"></div>
       </div>
-      <div id="tableSec">
+      <div id="tableSec" style="flex:1;min-height:0">
         <div class="table-wrap" id="tableWrap" style="max-height:75vh;overflow-y:auto">
           <table><thead id="thead"></thead><tbody id="tbody"></tbody></table>
         </div>
