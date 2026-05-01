@@ -116,46 +116,30 @@ body::after{content:'';position:fixed;inset:0;
 .alert-badge.high{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);text-shadow:0 0 8px rgba(239,68,68,.3)}
 .alert-badge.warn{background:rgba(245,158,11,.1);color:var(--orange);border:1px solid rgba(245,158,11,.2)}
 
-/* 警报列表 - 右栏左右对称排列 */
-.alert-pair-list{display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto;min-height:0;justify-content:flex-start}
+/* 警报列表 - 横向单行排列 */
+.alert-pair-list{display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto;min-height:0;justify-content:flex-start}
 .alert-pair-list.few-alerts{justify-content:space-evenly}
-.alert-pair{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:center;opacity:0;animation:alertSlide .4s var(--ease) forwards;padding:4px 0}
-.alert-pair .pair-city{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;transition:all .25s var(--ease);cursor:pointer;overflow:hidden;position:relative}
-.alert-pair .pair-city:hover{background:var(--surface3);border-color:var(--border2)}
-.alert-pair .pair-city .city-flag{font-size:20px;flex-shrink:0;width:28px;text-align:center}
-.alert-pair .pair-city .city-info{min-width:0;flex:1}
-.alert-pair .pair-city .city-name{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.alert-pair .pair-city .city-date{font-size:10px;color:var(--text3);margin-top:1px;font-weight:500}
-.alert-pair .pair-city .city-link-ico{color:var(--text3);font-size:10px;flex-shrink:0;transition:color .15s;margin-left:4px}
-.alert-pair .pair-city:hover .city-link-ico{color:var(--accent)}
-
-/* 中间连接线 */
-.alert-pair .pair-arrow{display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 10px;flex-shrink:0}
-.alert-pair .pair-arrow .arrow-line{height:1px;background:linear-gradient(90deg,var(--border),var(--border2),var(--border));width:40px}
-.alert-pair .pair-arrow .arrow-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;position:relative;transition:all .3s}
-.alert-pair .pair-arrow .arrow-dot.high{background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.2);color:var(--red)}
-.alert-pair .pair-arrow .arrow-dot.warn{background:rgba(245,158,11,.08);border:1.5px solid rgba(245,158,11,.2);color:var(--orange)}
-.alert-pair.high .pair-arrow .arrow-dot{animation:arrowPulse 2s ease-in-out infinite}
-
-/* 右侧警报详情 */
-.alert-pair .pair-alert{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;transition:all .25s var(--ease);position:relative;overflow:hidden;flex-wrap:wrap}
-.alert-pair .pair-alert::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:12px 0 0 12px}
-.alert-pair.high .pair-alert::before{background:linear-gradient(180deg,var(--red),rgba(239,68,68,.2))}
-.alert-pair.warn .pair-alert::before{background:linear-gradient(180deg,var(--orange),rgba(245,158,11,.2))}
-.alert-pair .pair-alert::after{content:'';position:absolute;left:-20px;top:-20px;width:60px;height:60px;border-radius:50%;pointer-events:none}
-.alert-pair.high .pair-alert::after{background:radial-gradient(circle,rgba(239,68,68,.04),transparent 70%)}
-.alert-pair.warn .pair-alert::after{background:radial-gradient(circle,rgba(245,158,11,.03),transparent 70%)}
-.alert-pair .pair-alert:hover{background:var(--surface3);border-color:var(--border2)}
-.alert-pair.high .pair-alert:hover{border-color:rgba(239,68,68,.2);box-shadow:0 4px 16px rgba(239,68,68,.06)}
-.alert-pair.warn .pair-alert:hover{border-color:rgba(245,158,11,.2);box-shadow:0 4px 16px rgba(245,158,11,.06)}
-.alert-detail-box{flex:1;min-width:0}
-.alert-detail-title{font-size:12px;font-weight:600;color:var(--text2);white-space:normal;word-break:break-word;line-height:1.4}
-.alert-detail-tags{display:flex;gap:5px;align-items:center;margin-top:4px;flex-wrap:wrap}
-.alert-detail-pct{font-size:16px;font-weight:900;font-family:var(--mono);flex-shrink:0;min-width:75px;text-align:left}
-.alert-pair.high .alert-detail-pct{color:var(--red)}
-.alert-pair.warn .alert-detail-pct{color:var(--orange)}
-.alert-detail-pct small{font-size:10px;color:var(--text3);font-weight:500;display:block;margin-top:1px}
-.alert-pair-link{padding:6px 12px;border-radius:8px;background:linear-gradient(135deg,var(--accent-glow),rgba(139,92,246,.06));color:var(--accent);text-decoration:none;font-size:11px;font-weight:700;border:1px solid rgba(59,130,246,.08);transition:all .25s var(--ease);white-space:nowrap;font-family:var(--font);flex-shrink:0;display:flex;align-items:center;gap:3px}
+/* 每个警报：横向单行卡片 */
+.alert-pair{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;opacity:0;animation:alertSlide .4s var(--ease) forwards;transition:all .2s var(--ease);position:relative;overflow:hidden}
+.alert-pair::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:12px 0 0 12px}
+.alert-pair.high::before{background:var(--red)}
+.alert-pair.warn::before{background:var(--orange)}
+.alert-pair:hover{background:var(--surface3);border-color:var(--border2);transform:translateX(2px)}
+.alert-pair.high{border-color:rgba(239,68,68,.15)}
+.alert-pair.warn{border-color:rgba(245,158,11,.15)}
+.alert-pair.high:hover{box-shadow:0 2px 12px rgba(239,68,68,.06)}
+.alert-pair.warn:hover{box-shadow:0 2px 12px rgba(245,158,11,.06)}
+/* 警报内的各元素 */
+.alert-flag{font-size:18px;flex-shrink:0}
+.alert-city{font-size:12px;font-weight:700;color:var(--text);min-width:75px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alert-date{font-size:10px;color:var(--text3);white-space:nowrap;margin-right:2px}
+.alert-settle{font-size:10px;font-weight:700;font-family:var(--mono);white-space:nowrap}
+.alert-tag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;flex-shrink:0}
+.alert-tag.yes{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.alert-tag.no{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.alert-pct{font-size:15px;font-weight:900;font-family:var(--mono);flex-shrink:0;min-width:65px;text-align:right}
+.alert-pct small{font-size:9px;font-weight:500;display:block;color:var(--text3)}
+.alert-pair-link{padding:5px 10px;border-radius:7px;background:linear-gradient(135deg,var(--accent-glow),rgba(139,92,246,.06));color:var(--accent);text-decoration:none;font-size:10px;font-weight:700;border:1px solid rgba(59,130,246,.08);transition:all .2s var(--ease);white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;gap:2px}
 .alert-pair-link:hover{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.25);transform:translateY(-1px);box-shadow:0 4px 16px rgba(59,130,246,.12)}
 
 .tag{padding:3px 10px;border-radius:7px;font-size:10px;font-weight:700;letter-spacing:.3px;transition:all .15s}
@@ -614,8 +598,8 @@ function analyze(events){
 function renderAlerts(alerts){
   var sec=$('alertSec'),list=$('alertList'),badge=$('alertCount'),icon=$('alertIcon');
   if(!alerts.length){sec.style.display='none';return}
-  /* 警报少的时候让内容均匀分布，不底部留白 */
-  if(alerts.length<=6){list.classList.add('few-alerts')}else{list.classList.remove('few-alerts')}
+  /* 横向单行布局，始终从上到下排列 */
+  list.classList.remove('few-alerts');
   sec.style.display='flex';badge.textContent=alerts.length;
   var hasHigh=false;
   for(var i=0;i<alerts.length;i++){if(alerts[i].pct>=99.69){hasHigh=true;break}}
@@ -626,34 +610,18 @@ function renderAlerts(alerts){
   for(var i=0;i<alerts.length;i++){
     var a=alerts[i],label=getLabel(a.zh,a.en);
     var cls=a.pct>=99.69?'high':'warn';
-    var arrowIcon=cls==='high'?'🔴':'🟡';
+    var dotIcon=cls==='high'?'🔴':'🟡';
     var remain=fmtRemain(a.settleTs-now);
     var remainColor=a.settleTs-now<=0?'var(--green)':a.settleTs-now<3600000?'var(--red)':'var(--orange)';
     h+='<div class="alert-pair '+cls+'" style="animation-delay:'+i*80+'ms">'
-      /* 左 - 城市 */
-      +'<a href="'+a.url+'" target="_blank" rel="noopener" class="pair-city">'
-        +'<span class="city-flag">'+a.fl+'</span>'
-        +'<div class="city-info">'
-          +'<div class="city-name">'+esc(label)+'</div>'
-          +'<div class="city-date">'+a.dt+'</div>'
-          +'<div class="city-settle" style="color:'+remainColor+';font-size:10px;margin-top:1px;font-weight:700;font-family:var(--mono)"><span data-settle-ts="'+a.settleTs+'">'+remain+'</span></div>'
-        +'</div>'
-        +'<span class="city-link-ico">↗</span>'
-      +'</a>'
-      /* 中 - 连接线 */
-      +'<div class="pair-arrow"><div class="arrow-line"></div><div class="arrow-dot '+cls+'">'+arrowIcon+'</div></div>'
-      /* 右 - 警报 */
-      +'<div class="pair-alert">'
-        +'<div class="alert-detail-box">'
-          +'<div class="alert-detail-title">'+esc(a.title)+'</div>'
-          +'<div class="alert-detail-tags">'
-            +'<span class="tag '+(a.side==='YES'?'tag-yes':'tag-no')+'">'+a.side+'</span>'
-            +'<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">Y '+a.yp.toFixed(1)+' / N '+a.np.toFixed(1)+'</span>'
-          +'</div>'
-        +'</div>'
-        +'<div class="alert-detail-pct">'+a.pct.toFixed(2)+'%</div>'
-        +'<a href="'+a.url+'" target="_blank" rel="noopener" class="alert-pair-link" title="'+esc(a.title)+'">↗ Trade</a>'
-      +'</div>'
+      +'<span class="alert-flag">'+a.fl+'</span>'
+      +'<span class="alert-city" title="'+esc(a.en)+'">'+esc(label)+'</span>'
+      +'<span class="alert-date">'+a.dt+'</span>'
+      +'<span class="dot-icon" style="font-size:10px;flex-shrink:0">'+dotIcon+'</span>'
+      +'<span class="alert-tag '+(a.side==='YES'?'yes':'no')+'">'+a.side+'</span>'
+      +'<span class="alert-pct" style="color:'+(cls==='high'?'var(--red)':'var(--orange)')+'">'+a.pct.toFixed(2)+'%</span>'
+      +'<span class="alert-settle" style="color:'+remainColor+'" data-settle-ts="'+a.settleTs+'">'+remain+'</span>'
+      +'<a href="'+a.url+'" target="_blank" rel="noopener" class="alert-pair-link" title="'+esc(a.title)+'">↗ Trade</a>'
     +'</div>';
   }
   list.innerHTML=h;
