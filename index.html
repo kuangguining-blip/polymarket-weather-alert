@@ -362,7 +362,13 @@ function fmtDate(y,m,d){return y+'-'+(m<10?'0':'')+m+'-'+(d<10?'0':'')+d}
 
 /* ========== GLOBALS ========== */
 var API='https://gamma-api.polymarket.com/events';
-var PROXIES=['https://api.allorigins.win/raw?url=','https://corsproxy.io/?','https://api.codetabs.com/v1/proxy?quest='];
+var PROXIES=[
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://cors.sh/?',
+  'https://crossorigin.me/'
+];
 var gData=null,gFilter='all',gSearch='',filterTimer=null;
 
 /* ========== UTILS ========== */
@@ -446,16 +452,24 @@ function animateNum(el,target,suffix){
 /* ========== API ========== */
 function ftFetch(url,ms){return new Promise(function(ok,no){var t=setTimeout(function(){no(new Error('timeout'))},ms);fetch(url).then(function(r){clearTimeout(t);ok(r)}).catch(function(e){clearTimeout(t);no(e)})})}
 async function apiGet(url){
-  try{log('  直接请求...');var r=await ftFetch(url,10000);if(r.ok){log('  ✓ 直接请求成功');return r.json()}log('  ✗ HTTP '+r.status,false)}catch(e){log('  ✗ '+e.message,false)}
+  var errors=[];
+  /* 先尝试直接请求 */
+  try{log('  直接请求...');var r=await ftFetch(url,15000);if(r.ok){log('  ✓ 直接请求成功');return r.json()}errors.push('HTTP '+r.status);log('  ✗ HTTP '+r.status,false)}
+  catch(e){errors.push(e.message);log('  ✗ '+e.message,false)}
+  /* 依次尝试代理，超时 20 秒 */
   for(var i=0;i<PROXIES.length;i++){
-    try{var pu=PROXIES[i]+encodeURIComponent(url);
-    log('  Proxy'+(i+1)+'...');
-    var r2=await ftFetch(pu,15000);
-    if(r2.ok){log('  ✓ Proxy'+(i+1)+' 成功');return r2.json()}
-    log('  ✗ Proxy'+(i+1)+' '+r2.status,false);
-    }catch(e2){log('  ✗ Proxy'+(i+1)+' '+e2.message,false)}
+    try{
+      var pu=PROXIES[i]+encodeURIComponent(url);
+      log('  Proxy'+(i+1)+' ('+PROXIES[i].replace(/https?:\/\/([^/]+).*/,'$1')+')...');
+      var r2=await ftFetch(pu,20000);
+      if(r2.ok){log('  ✓ Proxy'+(i+1)+' 成功');return r2.json()}
+      errors.push('P'+(i+1)+' '+r2.status);
+      log('  ✗ Proxy'+(i+1)+' HTTP '+r2.status,false);
+    }catch(e2){errors.push('P'+(i+1)+' '+e2.message);log('  ✗ Proxy'+(i+1)+' '+e2.message,false)}
   }
-  throw new Error(LANG==='zh'?'网络请求失败':'Network failed');
+  /* 所有代理都失败，再重试直接请求一次 */
+  try{log('  重试直接请求...');var r3=await ftFetch(url,20000);if(r3.ok){log('  ✓ 重试成功');return r3.json()}}catch(e3){}
+  throw new Error((LANG==='zh'?'所有网络请求失败：':'All network requests failed: ')+errors.slice(-3).join(', '));
 }
 
 /* ========== LOG ========== */
@@ -739,7 +753,7 @@ function applyLang(){
   $('lblTriggeredText').textContent=T('triggeredAlerts');
   $('searchBox').placeholder=T('searchPlaceholder');
   $('emptyTitle').innerHTML=T('emptyTitle');$('emptySub').textContent=T('emptySub');
-  if(autoInterval)$('autoBtn').innerHTML=T('autoRefresh')+' '+autoSec+'s';
+  if(autoTimer){var m=Math.floor(autoCountdown/60),s=autoCountdown%60;$('autoBtn').textContent=(m>0?m+'m':'')+s+'s'}
   else $('autoBtn').textContent='10m';
 }
 
