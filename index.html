@@ -618,8 +618,10 @@ function analyze(events){
       var mi={title:m.groupItemTitle||m.question,y:p.y,n:p.n,vol:parseFloat(m.volume||0),url:mUrl};
       map[ev.slug].mkts.push(mi);
       var yp=p.y*100,np=p.n*100;
-      /* 用用户阈值判断，不再使用硬编码范围 */
-      var yA=yp>=thr,nA=np>=thr;
+      /* 精确档位匹配：只触发 [thr, thr+0.05) 范围，Polymarket步进为0.05
+         即用户设99.6，只触发99.60这一档，不触发99.65/99.70/99.95等更高档 */
+      var STEP=0.05;
+      var yA=yp>=thr&&yp<thr+STEP,nA=np>=thr&&np<thr+STEP;
       if(yA||nA){var side=yA?'YES':'NO',pct=yA?yp:np;
         alerts.push({en:en,zh:zh,dt:dt,fl:fl,title:mi.title,side:side,pct:pct,yp:yp,np:np,url:mi.url,ck:ck,settleTs:settleTs});
       }
@@ -710,15 +712,16 @@ function renderTable(){
       for(var j=0;j<c.mkts.length;j++){
         var m=c.mkts[j];var yp=m.y*100,np=m.n*100;
         var thr2=getThr();
-        var isA=(yp>=thr2)||(np>=thr2);
-        var side=isA?(yp>=thr2?'YES':'NO'):'-';
-        var pct=isA?(yp>=thr2?yp:np).toFixed(2)+'%':'';
+        var STEP2=0.05;
+        var isA=(yp>=thr2&&yp<thr2+STEP2)||(np>=thr2&&np<thr2+STEP2);
+        var side=isA?(yp>=thr2&&yp<thr2+STEP2?'YES':'NO'):'-';
+        var pct=isA?((yp>=thr2&&yp<thr2+STEP2)?yp:np).toFixed(2)+'%':'';
         h+='<tr class="mkt-row">'
           +'<td></td><td></td>'
           +'<td style="color:var(--text2)">'+esc(m.title)+'</td>'
           +'<td><span class="bar-wrap"><span class="pct-val" style="color:'+(yp>80?'var(--red)':yp>50?'var(--orange)':'var(--green)')+'">'+fmtPct(m.y)+'%</span><span class="bar bar-yes" style="width:'+Math.max(2,Math.min(yp*0.5,50))+'px"></span></span></td>'
           +'<td><span class="bar-wrap"><span class="pct-val" style="color:'+(np>80?'var(--green)':np>50?'var(--orange)':'var(--red)')+'">'+fmtPct(m.n)+'%</span><span class="bar bar-no" style="width:'+Math.max(2,Math.min(np*0.5,50))+'px"></span></span></td>'
-        +'<td>'+(isA?'<span class="status-dot alert"></span><span class="tag '+(yp>=thr2?'tag-yes':'tag-no')+'" style="font-size:9px">'+side+' '+pct+'</span>':'<span class="no-alert-tag">—</span>')+'</td>'
+        +'<td>'+(isA?'<span class="status-dot alert"></span><span class="tag '+(yp>=thr2&&yp<thr2+STEP2?'tag-yes':'tag-no')+'" style="font-size:9px">'+side+' '+pct+'</span>':'<span class="no-alert-tag">—</span>')+'</td>'
         +'<td><a class="btn-trade" href="'+m.url+'" target="_blank" rel="noopener" title="'+esc(m.title)+'">Trade</a></td>'
       +'</tr>';
       }
