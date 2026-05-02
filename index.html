@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -147,6 +147,13 @@ body::after{content:'';position:fixed;inset:0;
 .alert-pair-link{padding:5px 10px;border-radius:7px;background:linear-gradient(135deg,var(--accent-glow),rgba(139,92,246,.06));color:var(--accent);text-decoration:none;font-size:10px;font-weight:700;border:1px solid rgba(59,130,246,.08);transition:all .2s var(--ease);white-space:nowrap;flex-shrink:0;display:inline-flex;align-items:center;gap:2px}
 .alert-pair-link:hover{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.25);transform:translateY(-1px);box-shadow:0 4px 16px rgba(59,130,246,.12)}
 .dot-icon{flex-shrink:0;display:inline-flex;align-items:center}
+
+/* === REGION GROUP IN ALERTS === */
+.alert-region-header{display:flex;align-items:center;gap:8px;padding:10px 4px 6px;font-size:11px;font-weight:700;color:var(--text2)}
+.alert-region-header .region-icon{font-size:16px;line-height:1}
+.alert-region-header .region-name{flex:1}
+.alert-region-header .region-count{font-size:10px;color:var(--text3);font-weight:500;font-family:var(--mono)}
+.alert-region-header::after{content:'';flex:1;height:1px;background:var(--border);margin-left:4px}
 
 .tag{padding:3px 10px;border-radius:7px;font-size:10px;font-weight:700;letter-spacing:.3px;transition:all .15s}
 .tag-yes{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
@@ -387,6 +394,35 @@ var ZH={nyc:'纽约',chicago:'芝加哥',miami:'迈阿密',dallas:'达拉斯',se
 var FLAGS={nyc:'🇺🇸',chicago:'🇺🇸',miami:'🇺🇸',dallas:'🇺🇸',seattle:'🇺🇸',atlanta:'🇺🇸','los-angeles':'🇺🇸','san-francisco':'🇺🇸',houston:'🇺🇸',denver:'🇺🇸',austin:'🇺🇸',toronto:'🇨🇦',london:'🇬🇧',paris:'🇫🇷',berlin:'🇩🇪',madrid:'🇪🇸',rome:'🇮🇹',amsterdam:'🇳🇱',milan:'🇮🇹',munich:'🇩🇪',warsaw:'🇵🇱',moscow:'🇷🇺',istanbul:'🇹🇷',ankara:'🇹🇷','tel-aviv':'🇮🇱',dubai:'🇦🇪',jeddah:'🇸🇦',karachi:'🇵🇰',mumbai:'🇮🇳',delhi:'🇮🇳',lucknow:'🇮🇳',dhaka:'🇧🇩',bangkok:'🇹🇭',singapore:'🇸🇬','kuala-lumpur':'🇲🇾',jakarta:'🇮🇩',manila:'🇵🇭','hong-kong':'🇭🇰',taipei:'🇹🇼',shanghai:'🇨🇳',beijing:'🇨🇳',shenzhen:'🇨🇳',guangzhou:'🇨🇳',chengdu:'🇨🇳',wuhan:'🇨🇳',chongqing:'🇨🇳',qingdao:'🇨🇳',tokyo:'🇯🇵',seoul:'🇰🇷',busan:'🇰🇷',sydney:'🇦🇺',melbourne:'🇦🇺',wellington:'🇳🇿',auckland:'🇳🇿','sao-paulo':'🇧🇷','buenos-aires':'🇦🇷','mexico-city':'🇲🇽',lima:'🇵🇪',bogota:'🇨🇴','panama-city':'🇵🇦',cairo:'🇪🇬',lagos:'🇳🇬',nairobi:'🇰🇪','cape-town':'🇿🇦',helsinki:'🇫🇮'};
 /* 城市时区偏移（小时），标准时间，不含夏令时 */
 var TZ={nyc:-5,chicago:-6,miami:-5,dallas:-6,seattle:-8,atlanta:-5,'los-angeles':-8,'san-francisco':-8,houston:-6,denver:-7,austin:-6,toronto:-5,london:0,paris:1,berlin:1,madrid:1,rome:1,amsterdam:1,milan:1,munich:1,warsaw:1,moscow:3,istanbul:3,ankara:3,'tel-aviv':2,dubai:4,jeddah:3,karachi:5,mumbai:5.5,delhi:5.5,lucknow:5.5,dhaka:6,bangkok:7,singapore:8,'kuala-lumpur':8,jakarta:7,manila:8,'hong-kong':8,taipei:8,shanghai:8,beijing:8,shenzhen:8,guangzhou:8,chengdu:8,wuhan:8,chongqing:8,qingdao:8,tokyo:9,seoul:9,busan:9,sydney:10,melbourne:10,wellington:12,auckland:12,'sao-paulo':-3,'buenos-aires':-3,'mexico-city':-6,lima:-5,bogota:-5,'panama-city':-5,cairo:2,lagos:1,nairobi:3,'cape-town':2,helsinki:2};
+
+/* 地区元数据 */
+var REGION_META={
+  na:  {icon:'🇺🇸', zh:'北美洲',   en:'North America'},
+  eu:  {icon:'🇪🇺', zh:'欧洲',     en:'Europe'},
+  apac: {icon:'🌏',  zh:'亚太地区', en:'Asia-Pacific'},
+  sa:  {icon:'🌎',  zh:'南美洲',   en:'South America'},
+  mea: {icon:'🌍',  zh:'非洲/中东', en:'Africa & Mideast'}
+};
+/* 城市 → 地区 */
+var CITY_REGION={
+  nyc:'na',chicago:'na',miami:'na',dallas:'na',seattle:'na',atlanta:'na',
+  'los-angeles':'na','san-francisco':'na',houston:'na',denver:'na',austin:'na',toronto:'na',
+  london:'eu',paris:'eu',berlin:'eu',madrid:'eu',rome:'eu',amsterdam:'eu',milan:'eu',munich:'eu',warsaw:'eu',moscow:'eu',istanbul:'eu',ankara:'eu',helsinki:'eu',
+  'tel-aviv':'mea',dubai:'mea',jeddah:'mea',karachi:'mea',mumbai:'apac',delhi:'apac',lucknow:'apac',dhaka:'apac',
+  bangkok:'apac',singapore:'apac','kuala-lumpur':'apac',jakarta:'apac',manila:'apac','hong-kong':'apac',taipei:'apac',
+  shanghai:'apac',beijing:'apac',shenzhen:'apac',guangzhou:'apac',chengdu:'apac',wuhan:'apac',chongqing:'apac',qingdao:'apac',
+  tokyo:'apac',seoul:'apac',busan:'apac',sydney:'apac',melbourne:'apac',wellington:'apac',auckland:'apac',
+  'sao-paulo':'sa','buenos-aires':'sa','mexico-city':'sa',lima:'sa',bogota:'sa','panama-city':'sa',
+  cairo:'mea',lagos:'mea',nairobi:'mea','cape-town':'mea'
+};
+function getRegionKey(cityKey){return CITY_REGION[cityKey]||'apac'}
+function getRegionMeta(cityKey){
+  var rk=getRegionKey(cityKey);
+  var m=REGION_META[rk];
+  if(!m)return {icon:'🌐',zh:'其他',en:'Other'};
+  return LANG==='zh'?{icon:m.icon,zh:m.zh,en:m.en}:{icon:m.icon,zh:m.en,en:m.en};
+}
+
 var MN_EN=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 var MN_ZH=['','1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 var MONTH_NAMES=['january','february','march','april','may','june','july','august','september','october','november','december'];
@@ -660,31 +696,51 @@ function analyze(events){
 function renderAlerts(alerts){
   var sec=$('alertSec'),list=$('alertList'),badge=$('alertCount'),icon=$('alertIcon');
   if(!alerts.length){sec.style.display='none';return}
-  /* 横向单行布局，始终从上到下排列 */
   list.classList.remove('few-alerts');
-  sec.style.display='flex';badge.textContent=alerts.length;
+  sec.style.display='flex';
+  /* 按地区分组 */
+  var groups={na:[],eu:[],apac:[],sa:[],mea:[]};
+  for(var i=0;i<alerts.length;i++){
+    var rk=getRegionKey(alerts[i].ck);
+    if(!groups[rk])groups[rk]=[];
+    groups[rk].push(alerts[i]);
+  }
   var hasHigh=false;
   for(var i=0;i<alerts.length;i++){if(alerts[i].pct>=99.69){hasHigh=true;break}}
   var lvl=hasHigh?'high':'warn';
   badge.className='alert-badge '+lvl;
   icon.className='alert-icon '+lvl;
   var h='',now=Date.now();
-  for(var i=0;i<alerts.length;i++){
-    var a=alerts[i],label=getLabel(a.zh,a.en);
-    var cls=a.pct>=99.69?'high':'warn';
-    var dotIcon=cls==='high'?'🔴':'🟡';
-    var remain=fmtRemain(a.settleTs-now);
-    var remainColor=a.settleTs-now<=0?'var(--green)':a.settleTs-now<3600000?'var(--red)':'var(--orange)';
-    h+='<div class="alert-pair '+cls+'" style="animation-delay:'+i*80+'ms">'
-      +'<span class="alert-flag">'+a.fl+'</span>'
-      +'<span class="alert-city" title="'+esc(a.en)+'">'+esc(label)+'</span>'
-      +'<span class="alert-temp" title="'+esc(a.title)+'">'+esc(a.title)+'</span>'
-      +'<span class="dot-icon" style="font-size:10px;flex-shrink:0">'+dotIcon+'</span>'
-      +'<span class="alert-tag '+(a.side==='YES'?'yes':'no')+'">'+a.side+'</span>'
-      +'<span class="alert-pct" style="color:'+(cls==='high'?'var(--red)':'var(--orange)')+'">'+a.pct.toFixed(2)+'%</span>'
-      +'<span class="alert-settle" style="color:'+remainColor+'" data-settle-ts="'+a.settleTs+'">'+remain+'</span>'
-      +'<a href="'+a.url+'" target="_blank" rel="noopener" class="alert-pair-link">↗</a>'
+  var regionOrder=['na','eu','apac','sa','mea'];
+  for(var ri=0;ri<regionOrder.length;ri++){
+    var rk=regionOrder[ri];
+    var alist=groups[rk];
+    if(!alist||!alist.length)continue;
+    var rm=REGION_META[rk];
+    if(!rm)continue;
+    var rName=LANG==='zh'?rm.zh:rm.en;
+    h+='<div class="alert-region-header">'
+      +'<span class="region-icon">'+rm.icon+'</span>'
+      +'<span class="region-name">'+rName+'</span>'
+      +'<span class="region-count">'+alist.length+' '+T('alert')+'</span>'
     +'</div>';
+    for(var i=0;i<alist.length;i++){
+      var a=alist[i],label=getLabel(a.zh,a.en);
+      var cls=a.pct>=99.69?'high':'warn';
+      var dotIcon=cls==='high'?'🔴':'🟡';
+      var remain=fmtRemain(a.settleTs-now);
+      var remainColor=a.settleTs-now<=0?'var(--green)':a.settleTs-now<3600000?'var(--red)':'var(--orange)';
+      h+='<div class="alert-pair '+cls+'" style="animation-delay:'+(ri*200+i*80)+'ms">'
+        +'<span class="alert-flag">'+a.fl+'</span>'
+        +'<span class="alert-city" title="'+esc(a.en)+'">'+esc(label)+'</span>'
+        +'<span class="alert-temp" title="'+esc(a.title)+'">'+esc(a.title)+'</span>'
+        +'<span class="dot-icon" style="font-size:10px;flex-shrink:0">'+dotIcon+'</span>'
+        +'<span class="alert-tag '+(a.side==='YES'?'yes':'no')+'">'+a.side+'</span>'
+        +'<span class="alert-pct" style="color:'+(cls==='high'?'var(--red)':'var(--orange)')+'">'+a.pct.toFixed(2)+'%</span>'
+        +'<span class="alert-settle" style="color:'+remainColor+'" data-settle-ts="'+a.settleTs+'">'+remain+'</span>'
+        +'<a href="'+a.url+'" target="_blank" rel="noopener" class="alert-pair-link">↗</a>'
+      +'</div>';
+    }
   }
   list.innerHTML=h;
 }
@@ -957,3 +1013,4 @@ document.addEventListener('keydown',function(e){
 </script>
 </body>
 </html>
+
