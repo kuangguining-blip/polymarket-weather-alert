@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<!-- v20260502-3 -->
 <title>Polymarket Weather Alert</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -286,7 +290,9 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
         <div class="quick-dates" id="quickDates"></div>
         <div class="input-group">
           <label id="lblThr">阈值</label>
-          <input type="number" id="threshold" value="99.7" step="0.1" min="50" max="100">
+          <input type="number" id="threshold" value="99.6" step="0.05" min="50" max="100">
+          <span style="margin:0 2px">–</span>
+          <input type="number" id="thresholdMax" value="99.65" step="0.05" min="50" max="100" title="警报上限（不包含）">
           <span>%</span>
         </div>
         <button class="btn btn-scan" id="scanBtn" onclick="scan()">
@@ -590,9 +596,16 @@ async function fetchEventsFromAPI(){
 
 /* ========== ANALYZE ========== */
 function getThr(){
-  /* 读取用户设置的阈值（百分比，如99.7） */
   var v=parseFloat($('threshold').value);
-  return isNaN(v)?99.7:Math.max(50,Math.min(100,v));
+  return isNaN(v)?99.6:Math.max(50,Math.min(100,v));
+}
+function getThrMax(){
+  var el=$('thresholdMax');
+  if(!el)return getThr()+0.05;
+  var v=parseFloat(el.value);
+  if(isNaN(v))return getThr()+0.05;
+  /* 上限必须 > 下限，最多 100 */
+  return Math.max(getThr()+0.001,Math.min(100,v));
 }
 function analyze(events){
   var alerts=[],map={},total=0;
@@ -618,10 +631,9 @@ function analyze(events){
       var mi={title:m.groupItemTitle||m.question,y:p.y,n:p.n,vol:parseFloat(m.volume||0),url:mUrl};
       map[ev.slug].mkts.push(mi);
       var yp=p.y*100,np=p.n*100;
-      /* 精确档位匹配：只触发 [thr, thr+0.05) 范围，Polymarket步进为0.05
-         即用户设99.6，只触发99.60这一档，不触发99.65/99.70/99.95等更高档 */
-      var STEP=0.05;
-      var yA=yp>=thr&&yp<thr+STEP,nA=np>=thr&&np<thr+STEP;
+      /* 触发范围：[thr, thrMax)，用户可通过两个输入框精确控制 */
+      var thrMax=getThrMax();
+      var yA=yp>=thr&&yp<thrMax,nA=np>=thr&&np<thrMax;
       if(yA||nA){var side=yA?'YES':'NO',pct=yA?yp:np;
         alerts.push({en:en,zh:zh,dt:dt,fl:fl,title:mi.title,side:side,pct:pct,yp:yp,np:np,url:mi.url,ck:ck,settleTs:settleTs});
       }
@@ -712,16 +724,16 @@ function renderTable(){
       for(var j=0;j<c.mkts.length;j++){
         var m=c.mkts[j];var yp=m.y*100,np=m.n*100;
         var thr2=getThr();
-        var STEP2=0.05;
-        var isA=(yp>=thr2&&yp<thr2+STEP2)||(np>=thr2&&np<thr2+STEP2);
-        var side=isA?(yp>=thr2&&yp<thr2+STEP2?'YES':'NO'):'-';
-        var pct=isA?((yp>=thr2&&yp<thr2+STEP2)?yp:np).toFixed(2)+'%':'';
+        var thrMax2=getThrMax();
+        var isA=(yp>=thr2&&yp<thrMax2)||(np>=thr2&&np<thrMax2);
+        var side=isA?(yp>=thr2&&yp<thrMax2?'YES':'NO'):'-';
+        var pct=isA?((yp>=thr2&&yp<thrMax2)?yp:np).toFixed(2)+'%':'';
         h+='<tr class="mkt-row">'
           +'<td></td><td></td>'
           +'<td style="color:var(--text2)">'+esc(m.title)+'</td>'
           +'<td><span class="bar-wrap"><span class="pct-val" style="color:'+(yp>80?'var(--red)':yp>50?'var(--orange)':'var(--green)')+'">'+fmtPct(m.y)+'%</span><span class="bar bar-yes" style="width:'+Math.max(2,Math.min(yp*0.5,50))+'px"></span></span></td>'
           +'<td><span class="bar-wrap"><span class="pct-val" style="color:'+(np>80?'var(--green)':np>50?'var(--orange)':'var(--red)')+'">'+fmtPct(m.n)+'%</span><span class="bar bar-no" style="width:'+Math.max(2,Math.min(np*0.5,50))+'px"></span></span></td>'
-        +'<td>'+(isA?'<span class="status-dot alert"></span><span class="tag '+(yp>=thr2&&yp<thr2+STEP2?'tag-yes':'tag-no')+'" style="font-size:9px">'+side+' '+pct+'</span>':'<span class="no-alert-tag">—</span>')+'</td>'
+        +'<td>'+(isA?'<span class="status-dot alert"></span><span class="tag '+(yp>=thr2&&yp<thrMax2?'tag-yes':'tag-no')+'" style="font-size:9px">'+side+' '+pct+'</span>':'<span class="no-alert-tag">—</span>')+'</td>'
         +'<td><a class="btn-trade" href="'+m.url+'" target="_blank" rel="noopener" title="'+esc(m.title)+'">Trade</a></td>'
       +'</tr>';
       }
@@ -923,6 +935,24 @@ document.addEventListener('keydown',function(e){
   var now=new Date(),tm=new Date(now);
   $('datePicker').value=fmtDate(tm.getFullYear(),tm.getMonth()+1,tm.getDate());
   initQuickDates();applyLang();
+  /* 下限变化时，自动把上限同步为下限+0.05 */
+  var thrIn=$('threshold'),thrMaxIn=$('thresholdMax');
+  if(thrIn&&thrMaxIn){
+    thrIn.addEventListener('change',function(){
+      var lo=parseFloat(thrIn.value);
+      if(!isNaN(lo)){
+        var hi=Math.round((lo+0.05)*1000)/1000;
+        thrMaxIn.value=Math.min(100,hi).toFixed(2);
+      }
+    });
+    thrIn.addEventListener('input',function(){
+      var lo=parseFloat(thrIn.value);
+      if(!isNaN(lo)){
+        var hi=Math.round((lo+0.05)*1000)/1000;
+        thrMaxIn.value=Math.min(100,hi).toFixed(2);
+      }
+    });
+  }
 })();
 </script>
 </body>
