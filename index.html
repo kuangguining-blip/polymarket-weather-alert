@@ -306,6 +306,8 @@ tbody tr:hover td{background:rgba(59,130,246,.03)}
         </div>
       </div>
       <div class="header-sub-right">
+        <span id="dataTimestamp" style="font-size:10px;color:var(--text3);font-family:var(--mono);display:none"></span>
+        <button class="btn btn-ghost" id="liveBtn" onclick="scanLive()" style="font-size:11px" title="直接拉取 Gamma API 实时数据（跳过缓存）">🔴 实时</button>
         <button class="btn btn-ghost" onclick="window.open('https://polymarket.com/tag/weather','_blank')" id="weatherBtn">天气板块</button>
         <button class="btn btn-ghost" id="logToggle" onclick="toggleLog()">日志</button>
       </div>
@@ -401,6 +403,7 @@ var PROXIES=[
   'https://api.codetabs.com/v1/proxy?quest='
 ];
 var gData=null,gFilter='all',gSearch='',filterTimer=null;
+var gDataTimestamp=null; /* data.json 的更新时间 */
 
 /* ========== UTILS ========== */
 function $(id){return document.getElementById(id)}
@@ -517,6 +520,21 @@ function toggleLog(){$('logPanel').classList.toggle('on')}
 function toast(msg,type){var t=$('toast');t.textContent=msg;t.className='toast toast-'+(type||'info')+' show';clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show')},4000)}
 
 /* ========== FETCH ========== */
+/* 更新数据时间戳显示 */
+function updateDataTs(label,isLive){
+  var el=$('dataTimestamp');
+  if(!el)return;
+  el.style.display='inline';
+  el.title=isLive?(LANG==='zh'?'直接来自 Polymarket Gamma API':'Direct from Polymarket Gamma API'):(LANG==='zh'?'GitHub Actions 每10分钟缓存':'Cached by GitHub Actions every 10 min');
+  if(isLive){
+    el.innerHTML='🟢 '+(LANG==='zh'?'实时':'Live')+' · '+label;
+    el.style.color='var(--green)';
+  }else{
+    el.innerHTML='🕐 '+(LANG==='zh'?'缓存':'Cache')+' · '+label;
+    el.style.color='var(--text3)';
+  }
+}
+
 async function fetchEvents(){
   /* 优先读 GitHub Actions 缓存的 data.json（零 CORS） */
   try{
@@ -525,7 +543,19 @@ async function fetchEvents(){
     if(r.ok){
       var data=await r.json();
       if(data&&data.length>0){
-        log('✓ '+data.length+(LANG==='zh'?' 条缓存数据':' cached events'));
+        /* 尝试从 Last-Modified 头或 _fetchedAt 字段获取时间 */
+        var tsStr='';
+        var lastMod=r.headers.get('Last-Modified')||r.headers.get('last-modified');
+        if(lastMod){
+          var d=new Date(lastMod);
+          tsStr=d.getHours()+':'+pad(d.getMinutes())+' ('+d.getMonth()+1+'/'+d.getDate()+')';
+        }else{
+          /* 从数据里检查是否有 _fetchedAt 标记 */
+          if(data._meta&&data._meta.fetchedAt)tsStr=data._meta.fetchedAt;
+          else tsStr=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+        }
+        log('✓ '+data.length+(LANG==='zh'?' 条缓存数据（'+tsStr+'）':' cached events ('+tsStr+')'));
+        updateDataTs(tsStr,false);
         $('progBar').style.width='100%';
         return data;
       }
@@ -534,7 +564,12 @@ async function fetchEvents(){
   }catch(e){
     log('  缓存不可用 ('+e.message+')，尝试 API...',false);
   }
-  /* 缓存失败时回退到 API + CORS 代理 */
+  /* 缓存失败时回退到直接 API */
+  return fetchEventsFromAPI();
+}
+
+/* 直接从 Gamma API 拉取（实时，跳过缓存） */
+async function fetchEventsFromAPI(){
   var all=[],offset=0,limit=100;
   while(true){
     var url=API+'?tag_slug=daily-temperature&limit='+limit+'&closed=false&offset='+offset;
@@ -548,16 +583,26 @@ async function fetchEvents(){
     if(data.length<limit){log('  — 末页 (返回'+data.length+'条)');break}
     offset+=limit;if(offset>300)break;
   }
+  var nowStr=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+  updateDataTs(nowStr,true);
   return all;
 }
 
 /* ========== ANALYZE ========== */
+function getThr(){
+  /* 读取用户设置的阈值（百分比，如99.7） */
+  var v=parseFloat($('threshold').value);
+  return isNaN(v)?99.7:Math.max(50,Math.min(100,v));
+}
 function analyze(events){
   var alerts=[],map={},total=0;
   var tv=$('datePicker').value;if(!tv)return{alerts:alerts,map:map,dates:[],total:0};
   var dp=tv.split('-');var tY=parseInt(dp[0]),tM=parseInt(dp[1]),tD=parseInt(dp[2]);
+  var thr=getThr(); /* 用户设置的阈值（百分比） */
   for(var i=0;i<events.length;i++){
     var ev=events[i],ck=cityKey(ev.slug);if(!ck)continue;
+    /* 仅处理 highest-temperature */
+    if(ev.slug.indexOf('highest-temperature')===-1)continue;
     var dm=slugMonth(ev.slug);
     if(dm&&((dm.month!==tM)||(dm.day!==tD)||(dm.year!==tY)))continue;
     var en=cityEN(ev.slug),zh=cityZH(ev.slug),fl=cityFlag(ev.slug);
@@ -573,7 +618,8 @@ function analyze(events){
       var mi={title:m.groupItemTitle||m.question,y:p.y,n:p.n,vol:parseFloat(m.volume||0),url:mUrl};
       map[ev.slug].mkts.push(mi);
       var yp=p.y*100,np=p.n*100;
-      var yA=yp>=99.66&&yp<=99.71,nA=np>=99.66&&np<=99.71;
+      /* 用用户阈值判断，不再使用硬编码范围 */
+      var yA=yp>=thr,nA=np>=thr;
       if(yA||nA){var side=yA?'YES':'NO',pct=yA?yp:np;
         alerts.push({en:en,zh:zh,dt:dt,fl:fl,title:mi.title,side:side,pct:pct,yp:yp,np:np,url:mi.url,ck:ck,settleTs:settleTs});
       }
@@ -663,15 +709,16 @@ function renderTable(){
       +'</tr>';
       for(var j=0;j<c.mkts.length;j++){
         var m=c.mkts[j];var yp=m.y*100,np=m.n*100;
-        var isA=(yp>=99.66&&yp<=99.71)||(np>=99.66&&np<=99.71);
-        var side=isA?(yp>=99.66&&yp<=99.71?'YES':'NO'):'-';
-        var pct=isA?(yp>=99.66&&yp<=99.71?yp:np).toFixed(2)+'%':'';
+        var thr2=getThr();
+        var isA=(yp>=thr2)||(np>=thr2);
+        var side=isA?(yp>=thr2?'YES':'NO'):'-';
+        var pct=isA?(yp>=thr2?yp:np).toFixed(2)+'%':'';
         h+='<tr class="mkt-row">'
           +'<td></td><td></td>'
           +'<td style="color:var(--text2)">'+esc(m.title)+'</td>'
           +'<td><span class="bar-wrap"><span class="pct-val" style="color:'+(yp>80?'var(--red)':yp>50?'var(--orange)':'var(--green)')+'">'+fmtPct(m.y)+'%</span><span class="bar bar-yes" style="width:'+Math.max(2,Math.min(yp*0.5,50))+'px"></span></span></td>'
           +'<td><span class="bar-wrap"><span class="pct-val" style="color:'+(np>80?'var(--green)':np>50?'var(--orange)':'var(--red)')+'">'+fmtPct(m.n)+'%</span><span class="bar bar-no" style="width:'+Math.max(2,Math.min(np*0.5,50))+'px"></span></span></td>'
-        +'<td>'+(isA?'<span class="status-dot alert"></span><span class="tag '+(yp>=99.66&&yp<=99.71?'tag-yes':'tag-no')+'" style="font-size:9px">'+side+' '+pct+'</span>':'<span class="no-alert-tag">—</span>')+'</td>'
+        +'<td>'+(isA?'<span class="status-dot alert"></span><span class="tag '+(yp>=thr2?'tag-yes':'tag-no')+'" style="font-size:9px">'+side+' '+pct+'</span>':'<span class="no-alert-tag">—</span>')+'</td>'
         +'<td><a class="btn-trade" href="'+m.url+'" target="_blank" rel="noopener" title="'+esc(m.title)+'">Trade</a></td>'
       +'</tr>';
       }
@@ -749,14 +796,22 @@ function debounceFilter(){clearTimeout(filterTimer);filterTimer=setTimeout(funct
 
 /* ========== SCAN ========== */
 async function scan(){
-  var btn=$('scanBtn'),ico=$('scanIco'),txt=$('scanTxt');
-  btn.disabled=true;ico.innerHTML='<div class="spin"></div>';txt.textContent=T('scanning');
+  return doScan(false);
+}
+async function scanLive(){
+  return doScan(true);
+}
+async function doScan(live){
+  var btn=$('scanBtn'),liveBtn=$('liveBtn'),ico=$('scanIco'),txt=$('scanTxt');
+  btn.disabled=true;liveBtn.disabled=true;
+  ico.innerHTML='<div class="spin"></div>';txt.textContent=T('scanning');
+  if(live)liveBtn.innerHTML='<div class="spin"></div>';
   $('emptyState').style.display='none';$('stats').style.display='grid';
   $('prog').classList.add('on');$('progBar').style.width='3%';$('logPanel').innerHTML='';
   var t0=Date.now();
   try{
-    log(T('scanStart'));
-    var events=await fetchEvents();
+    log(live?(LANG==='zh'?'🔴 实时扫描（直接访问 Gamma API）...':'🔴 Live scan via Gamma API...'):T('scanStart'));
+    var events=live?await fetchEventsFromAPI():await fetchEvents();
     log(T('scanFetched').replace('{n}',events.length));
     $('progBar').style.width='97%';
     gData=analyze(events);gData._raw=events;
@@ -769,7 +824,9 @@ async function scan(){
     if(gData.alerts.length){toast(T('alertFound').replace('{n}',gData.alerts.length),'error');playSound()}
     else{toast(T('noAlert').replace('{c}',nc),'ok')}
   }catch(err){toast(T('scanFail')+': '+err.message,'error');log('ERROR: '+err.message,true);$('prog').classList.remove('on')}
-  btn.disabled=false;ico.innerHTML='⚡';txt.textContent=T('scan');
+  btn.disabled=false;liveBtn.disabled=false;
+  ico.innerHTML='⚡';txt.textContent=T('scan');
+  liveBtn.innerHTML='🔴 '+(LANG==='zh'?'实时':'Live');
   if(autoTimer)autoCountdown=600;
 }
 
